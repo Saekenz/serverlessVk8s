@@ -1,0 +1,68 @@
+package at.ac.univie.orderservice.service;
+
+import at.ac.univie.orderservice.model.Customer;
+import at.ac.univie.orderservice.model.Order;
+import at.ac.univie.orderservice.model.OrderDTO;
+import at.ac.univie.orderservice.repository.OrderRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.List;
+import java.util.Optional;
+
+@Service
+public class OrderServiceImpl implements IOrderService{
+
+    @Autowired
+    private OrderRepository orderRepository;
+
+    @Autowired
+    private RestTemplate restTemplate;
+
+    @Override
+    public ResponseEntity<?> findAll() {
+        List<Order> orders = orderRepository.findAll();
+        return ResponseEntity.ok(orders);
+    }
+
+    @Override
+    public ResponseEntity<?> findById(Long id) {
+        Optional<Order> order = orderRepository.findById(id);
+
+        if (order.isPresent()) {
+            Customer customer = restTemplate.getForObject("http://localhost:8082/customers/" +
+                    order.get().getCustomerId(), Customer.class);
+            OrderDTO orderDTO = new OrderDTO(
+                    order.get().getId(),
+                    customer,
+                    order.get().getLocationId(),
+                    order.get().getStatus(),
+                    order.get().getCreatedAt(),
+                    order.get().getUpdatedAt()
+            );
+
+            return ResponseEntity.ok(orderDTO);
+        }
+        else {
+            return new ResponseEntity<>(String.format("Order with id %s could not be found!", id),
+                    HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @Override
+    public ResponseEntity<?> save(Order order) {
+        try {
+            return new ResponseEntity<>(orderRepository.save(order), HttpStatus.CREATED);
+        } catch (Exception e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Override
+    public Order getReferenceById(Long id) {
+        return orderRepository.getReferenceById(id);
+    }
+}
