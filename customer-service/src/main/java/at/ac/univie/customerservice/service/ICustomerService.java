@@ -1,16 +1,18 @@
 package at.ac.univie.customerservice.service;
 
 import at.ac.univie.customerservice.model.Customer;
-
-import java.util.List;
+import at.ac.univie.customerservice.model.CustomerDTO;
+import org.springframework.http.ResponseEntity;
 
 public interface ICustomerService {
 
-    List<Customer> findAll();
+    ResponseEntity<?> findAll();
 
-    Customer findById(Long id);
+    ResponseEntity<?> findById(Long id);
 
-    Customer save(Customer customer);
+    ResponseEntity<?> save(Customer customer);
+
+    ResponseEntity<?> update(Long id, CustomerDTO customerDTO);
 
     Customer getReferenceById(Long id);
 }
