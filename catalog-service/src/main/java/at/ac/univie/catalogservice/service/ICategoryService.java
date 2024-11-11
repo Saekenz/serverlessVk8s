@@ -1,16 +1,15 @@
 package at.ac.univie.catalogservice.service;
 
 import at.ac.univie.catalogservice.model.Category;
-
-import java.util.List;
+import org.springframework.http.ResponseEntity;
 
 public interface ICategoryService {
 
-    List<Category> findAll();
+    ResponseEntity<?> findAll();
 
-    Category findById(Long id);
+    ResponseEntity<?> findById(Long id);
 
-    Category save(Category category);
+    ResponseEntity<?> save(Category category);
 
     Category getReferenceById(Long id);
 }

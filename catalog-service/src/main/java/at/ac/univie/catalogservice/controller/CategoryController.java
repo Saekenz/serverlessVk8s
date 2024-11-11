@@ -3,9 +3,8 @@ package at.ac.univie.catalogservice.controller;
 import at.ac.univie.catalogservice.model.Category;
 import at.ac.univie.catalogservice.service.ICategoryService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @CrossOrigin("*")
 @RestController
@@ -16,17 +15,17 @@ public class CategoryController {
     private ICategoryService categoryService;
 
     @GetMapping
-    public List<Category> findAllCategories() {
+    public ResponseEntity<?> findAllCategories() {
         return categoryService.findAll();
     }
 
     @PostMapping
-    public Category createCategory(@RequestBody Category category) {
+    public ResponseEntity<?> createCategory(@RequestBody Category category) {
         return categoryService.save(category);
     }
 
     @GetMapping("/{id}")
-    public Category findCategoryById(@PathVariable Long id) {
+    public ResponseEntity<?> findCategoryById(@PathVariable Long id) {
         return categoryService.findById(id);
     }
 }

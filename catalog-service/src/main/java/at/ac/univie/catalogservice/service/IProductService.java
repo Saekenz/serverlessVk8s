@@ -1,16 +1,18 @@
 package at.ac.univie.catalogservice.service;
 
 import at.ac.univie.catalogservice.model.Product;
-
-import java.util.List;
+import at.ac.univie.catalogservice.model.ProductDTO;
+import org.springframework.http.ResponseEntity;
 
 public interface IProductService {
 
-    List<Product> findAll();
+    ResponseEntity<?> findAll();
 
-    Product findById(Long id);
+    ResponseEntity<?> findById(Long id);
 
-    Product save(Product product);
+    ResponseEntity<?> save(Product product);
+
+    ResponseEntity<?> update(Long id, ProductDTO productDTO);
 
     Product getReferenceById(Long id);
 }
