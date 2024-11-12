@@ -11,6 +11,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -35,6 +37,17 @@ public class AlertServiceImpl implements IAlertService {
     }
 
     @Override
+    public ResponseEntity<?> findByDateRange(LocalDateTime from, LocalDateTime to) {
+        if (from != null && to != null) {
+            List<AlertDTO> alerts = alertRepository.findByCreatedAtBetween(from, to).stream()
+                    .map(alert -> modelMapper.map(alert, AlertDTO.class))
+                    .toList();
+            return ResponseEntity.ok(alerts);
+        }
+        return findAll();
+    }
+
+    @Override
     public ResponseEntity<?> findById(Long id) {
         Optional<Alert> alert = alertRepository.findById(id);
 
@@ -56,6 +69,20 @@ public class AlertServiceImpl implements IAlertService {
             return ResponseEntity.created(new URI(newCustomerLocation)).body(dto);
         } catch (Exception e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Override
+    public ResponseEntity<?> delete(Long id) {
+        Optional<Alert> alert = alertRepository.findById(id);
+
+        if (alert.isPresent()) {
+            alertRepository.deleteById(id);
+            return ResponseEntity.noContent().build();
+        }
+        else {
+            return new ResponseEntity<>(String.format("Alert with id %s could not be found!", id),
+                    HttpStatus.NOT_FOUND);
         }
     }
 
