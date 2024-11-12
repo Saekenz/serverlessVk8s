@@ -23,14 +23,6 @@ public class OrderDetail {
     @JsonIgnore
     private Order order;
 
-//    @ManyToOne
-//    @MapsId("productId")
-//    @JoinColumn(name = "product_id")
-//    private Product product;
-
-//    @Column(name = "product_id", insertable = false, updatable = false)
-//    private Long productId;
-
     private int quantity;
 
     private double unitPrice;

@@ -1,10 +1,8 @@
 package at.ac.univie.orderservice.service;
 
 import at.ac.univie.orderservice.model.Order;
-import org.apache.coyote.Response;
+import at.ac.univie.orderservice.model.OrderCreationDTO;
 import org.springframework.http.ResponseEntity;
-
-import java.util.List;
 
 public interface IOrderService {
 
@@ -12,7 +10,7 @@ public interface IOrderService {
 
     ResponseEntity<?> findById(Long id);
 
-    ResponseEntity<?> save(Order order);
+    ResponseEntity<?> save(OrderCreationDTO orderDTO);
 
     Order getReferenceById(Long id);
 }
