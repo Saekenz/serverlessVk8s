@@ -3,6 +3,8 @@ package at.ac.univie.alertservice.service;
 import at.ac.univie.alertservice.model.Alert;
 import at.ac.univie.alertservice.model.AlertDTO;
 import at.ac.univie.alertservice.repository.AlertRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
@@ -11,12 +13,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 @Service
+@Slf4j
 public class AlertServiceImpl implements IAlertService {
 
     @Autowired
@@ -24,6 +26,9 @@ public class AlertServiceImpl implements IAlertService {
 
     @Autowired
     private ModelMapper modelMapper;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Autowired
     private Environment env;
@@ -69,6 +74,16 @@ public class AlertServiceImpl implements IAlertService {
             return ResponseEntity.created(new URI(newCustomerLocation)).body(dto);
         } catch (Exception e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Override
+    public void save(String alertMsg) {
+        try {
+            Alert alert = objectMapper.readValue(alertMsg, Alert.class);
+            alertRepository.save(alert);
+        } catch (Exception e) {
+            log.error(e.getMessage());
         }
     }
 

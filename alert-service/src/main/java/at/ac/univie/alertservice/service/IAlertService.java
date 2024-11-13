@@ -15,6 +15,8 @@ public interface IAlertService {
 
     ResponseEntity<?> save(Alert alert);
 
+    void save(String alertMsg);
+
     ResponseEntity<?> delete(Long id);
 
     Alert getReferenceById(Long id);

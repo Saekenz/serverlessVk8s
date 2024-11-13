@@ -4,6 +4,10 @@ plugins {
 	id 'io.spring.dependency-management' version '1.1.6'
 }
 
+ext {
+	springCloudGcpVersion = "5.8.0"
+}
+
 group = 'at.ac.univie'
 version = '0.0.1-SNAPSHOT'
 
@@ -28,11 +32,23 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.modelmapper:modelmapper:3.2.1'
+	implementation 'org.springframework.boot:spring-boot-starter-integration'
+	implementation 'com.google.cloud:spring-cloud-gcp-starter-pubsub'
+	implementation 'org.springframework.integration:spring-integration-jdbc'
+	implementation 'org.springframework.integration:spring-integration-jpa'
+	implementation 'org.springframework.integration:spring-integration-http'
+	testImplementation 'org.springframework.integration:spring-integration-test'
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'org.postgresql:postgresql'
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+dependencyManagement {
+	imports {
+		mavenBom "com.google.cloud:spring-cloud-gcp-dependencies:$springCloudGcpVersion"
+	}
 }
 
 tasks.named('test') {

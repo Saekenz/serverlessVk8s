@@ -1,16 +1,12 @@
 package at.ac.univie.alertservice.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
-@Getter
-@Setter
+@Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
@@ -23,10 +19,11 @@ public class Alert {
 
     private Long productId;
 
+    private Long locationId;
+
     private String category;
 
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;
-
 }

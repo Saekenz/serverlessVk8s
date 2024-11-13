@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 public class AlertDTO {
     private Long id;
     private Long productId;
+    private Long locationId;
     private String category;
     private LocalDateTime createdAt;
 }
