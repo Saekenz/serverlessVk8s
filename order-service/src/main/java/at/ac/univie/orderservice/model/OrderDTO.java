@@ -5,7 +5,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
@@ -14,10 +13,10 @@ import java.util.List;
 @NoArgsConstructor
 public class OrderDTO {
     private Long id;
-    private Customer customer;
+    private Long customerId;
     private Long locationId;
     private String status;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private String createdAt;
+    private String updatedAt;
     private List<OrderDetail> orderDetails;
 }

@@ -16,9 +16,9 @@ import java.io.Serializable;
 @AllArgsConstructor
 public class OrderDetailKey implements Serializable {
 
-    @Column(name = "order_id")
+    @Column(name = "order_id", nullable = false)
     private Long orderId;
 
-    @Column(name = "productId")
+    @Column(name = "productId", nullable = false)
     private Long productId;
 }

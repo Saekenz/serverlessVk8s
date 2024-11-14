@@ -23,7 +23,16 @@ public class OrderDetail {
     @JsonIgnore
     private Order order;
 
+    @Column(nullable = false)
     private int quantity;
 
     private double unitPrice;
+
+    public OrderDetailDTO toDto() {
+        OrderDetailDTO dto = new OrderDetailDTO();
+        dto.setProductId(this.id.getProductId());
+        dto.setLocationId(this.order.getLocationId());
+        dto.setQuantity(this.quantity);
+        return dto;
+    }
 }
