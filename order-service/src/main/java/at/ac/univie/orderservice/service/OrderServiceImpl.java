@@ -1,5 +1,6 @@
 package at.ac.univie.orderservice.service;
 
+import at.ac.univie.orderservice.config.PubSubConfiguration;
 import at.ac.univie.orderservice.model.*;
 import at.ac.univie.orderservice.outbound.OutboundConfiguration;
 import at.ac.univie.orderservice.repository.OrderRepository;
@@ -30,6 +31,9 @@ public class OrderServiceImpl implements IOrderService{
 
     @Autowired
     private Environment env;
+
+    @Autowired
+    private PubSubConfiguration pubSubConfiguration;
 
     @Override
     public ResponseEntity<?> findAll() {
@@ -76,7 +80,7 @@ public class OrderServiceImpl implements IOrderService{
             try {
                 OrderDetailDTO dto = orderDetail.toDto();
                 String stockUpdateJson = objectMapper.writeValueAsString(dto);
-                messagingGateway.sendToPubSub(stockUpdateJson);
+                messagingGateway.sendToPubSub(stockUpdateJson, pubSubConfiguration.getTopic());
             } catch (Exception e) {
                 log.error("Error while creating stock update: {}", e.getMessage());
             }
