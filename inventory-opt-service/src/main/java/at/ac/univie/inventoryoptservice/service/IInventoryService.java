@@ -5,4 +5,6 @@ import org.springframework.http.ResponseEntity;
 public interface IInventoryService {
 
     ResponseEntity<?> fetchInventoryAllocation();
+
+    ResponseEntity<?> pubsubTest();
 }

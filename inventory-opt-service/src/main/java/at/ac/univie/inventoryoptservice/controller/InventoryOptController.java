@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @CrossOrigin("*")
 @RestController
-@RequestMapping("/optimize")
+@RequestMapping("/inventories")
 @RequiredArgsConstructor
 @Slf4j
 public class InventoryOptController {
@@ -23,5 +23,10 @@ public class InventoryOptController {
     @GetMapping
     public ResponseEntity<?> testGetInventoryAllocation() {
         return inventoryService.fetchInventoryAllocation();
+    }
+
+    @GetMapping("/testpubsub")
+    public ResponseEntity<?> testPubSub() {
+        return inventoryService.pubsubTest();
     }
 }
