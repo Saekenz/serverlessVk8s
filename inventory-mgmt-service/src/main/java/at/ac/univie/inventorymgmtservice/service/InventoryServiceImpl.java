@@ -1,19 +1,17 @@
 package at.ac.univie.inventorymgmtservice.service;
 
 import at.ac.univie.inventorymgmtservice.config.PubSubConfiguration;
-import at.ac.univie.inventorymgmtservice.model.CurrentStockUpdateDTO;
-import at.ac.univie.inventorymgmtservice.model.Inventory;
-import at.ac.univie.inventorymgmtservice.model.TargetStockUpdateDTO;
+import at.ac.univie.inventorymgmtservice.model.InventoryCurrentStockUpdateDTO;
+import at.ac.univie.inventorymgmtservice.model.InventoryTargetStockUpdateDTO;
 import at.ac.univie.inventorymgmtservice.model.StockAlertDTO;
 import at.ac.univie.inventorymgmtservice.outbound.OutboundConfiguration;
 import at.ac.univie.inventorymgmtservice.repository.InventoryRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.util.Optional;
 
 @Service
 @Slf4j
@@ -35,69 +33,75 @@ public class InventoryServiceImpl implements IInventoryService {
 
 
     @Override
-    public void handleIncomingOrderItem(String message) {
+    public void handleIncomingTargetStockUpdateMessage(String message) {
         try {
-            TargetStockUpdateDTO inv = objectMapper.readValue(message, TargetStockUpdateDTO.class);
+            InventoryTargetStockUpdateDTO recvInv = objectMapper.readValue(message,
+                    InventoryTargetStockUpdateDTO.class);
 
-            Optional<Inventory> foundInv = inventoryRepository.findByProductIdAndLocationId(
-                    inv.getProductId(), inv.getLocationId());
+            inventoryRepository.findByProductIdAndLocationId(recvInv.getProductId(), recvInv.getLocationId())
+                    .ifPresentOrElse(oldInv -> {
+                        if (recvInv.getOrderedQuantity() > LARGE_ORDER_THRESHOLD) {
+                            createAndSendStockAlert(recvInv, "Large Order");
+                        }
 
-            if (foundInv.isPresent()) {
-                if (inv.getOrderedQuantity() > LARGE_ORDER_THRESHOLD) {
-                    createAndSendStockAlert(inv, "Large Order");
-                }
+                        double newTargetStock = oldInv.getTargetStock() + recvInv.getOrderedQuantity();
+                        if (oldInv.getCurrentStock()/newTargetStock < STOCK_LOW_THRESHOLD)
+                            createAndSendStockAlert(recvInv, "Stock Low");
 
-                double newTargetStock = foundInv.get().getTargetStock() + inv.getOrderedQuantity();
-                if (foundInv.get().getCurrentStock()/newTargetStock < STOCK_LOW_THRESHOLD)
-                    createAndSendStockAlert(inv, "Stock Low");
+                        updateTargetStock(recvInv);
 
-//                updateTargetStock(inv);
-
-                foundInv.get().setTargetStock(foundInv.get().getTargetStock() + inv.getOrderedQuantity());
-                Inventory updatedInv = inventoryRepository.save(foundInv.get());
-                log.info("Target stock updated: {}", updatedInv);
-            }
+                    }, () -> log.warn("Inventory not found for productId: {} and locationId: {}",
+                            recvInv.getProductId(), recvInv.getLocationId()));
+        } catch (JsonProcessingException e) {
+            log.error("Failed to parse target stock update message: {}", e.getMessage());
         } catch (Exception e) {
-            log.error("Error while processing order item: {}", e.getMessage());
+            log.error("Unexpected error while processing target stock update: {}", e.getMessage());
         }
     }
 
-    private void updateTargetStock(TargetStockUpdateDTO inv) {
-        int rowsUpdated = inventoryRepository.updateTargetStock(inv.getProductId(), inv.getLocationId(),
+    @Override
+    public void handleIncomingCurrentStockUpdateMessage(String message) {
+        try {
+            InventoryCurrentStockUpdateDTO recvInv = objectMapper.readValue(message,
+                    InventoryCurrentStockUpdateDTO.class);
+
+            int updatedRows = inventoryRepository.updateCurrentStock(recvInv.getProductId(), recvInv.getLocationId(),
+                    recvInv.getNewCurrentStock());
+
+            logUpdatedRows(updatedRows);
+            if (updatedRows < 1) {
+                log.error("Error updating current stock for inventory with productId: {} and locationId: {}",
+                        recvInv.getProductId(), recvInv.getLocationId());
+            }
+        } catch (JsonProcessingException e) {
+            log.error("Failed to parse inventory optimization message: {}", e.getMessage());
+        } catch (Exception e) {
+            log.error("Unexpected error while processing inventory optimization: {}", e.getMessage());
+        }
+    }
+
+    private void logUpdatedRows(int rowsUpdated) {
+        log.info("Rows updated: {}", rowsUpdated);
+    }
+
+    private void updateTargetStock(InventoryTargetStockUpdateDTO inv) {
+        int updatedRows = inventoryRepository.increaseTargetStock(inv.getProductId(), inv.getLocationId(),
                 inv.getOrderedQuantity());
 
-        log.info("Rows updated: {}", rowsUpdated);
-        if (rowsUpdated < 1) {
-            log.error("Error updating current stock");
+        logUpdatedRows(updatedRows);
+        if (updatedRows < 1) {
+            log.error("Error updating target stock for inventory with productId: {} and locationId: {}",
+                    inv.getProductId(), inv.getLocationId());
         }
     }
 
-    private void createAndSendStockAlert(TargetStockUpdateDTO inv, String alertCategory) {
+    private void createAndSendStockAlert(InventoryTargetStockUpdateDTO inv, String alertCategory) {
         try {
             StockAlertDTO stockAlert = new StockAlertDTO(inv.getProductId(), inv.getLocationId(), alertCategory);
             String stockAlertJson = objectMapper.writeValueAsString(stockAlert);
             messagingGateway.sendToPubSub(stockAlertJson, pubSubConfiguration.getAlertTopic());
         } catch (Exception e) {
             log.error("Error while creating stock alert: {}", e.getMessage());
-        }
-    }
-
-    @Override
-    public void handleIncomingStockOptimization(String message) {
-        try {
-            CurrentStockUpdateDTO inv = objectMapper.readValue(message, CurrentStockUpdateDTO.class);
-
-            Optional<Inventory> foundInv = inventoryRepository.findByProductIdAndLocationId(inv.getProductId(),
-                    inv.getLocationId());
-
-            if (foundInv.isPresent()) {
-                foundInv.get().setCurrentStock(inv.getNewCurrentStock());
-                Inventory updatedInv = inventoryRepository.save(foundInv.get());
-                log.info("Current Stock updated: {}", updatedInv);
-            }
-
-        } catch (Exception e) {
-            log.error("Error while processing inventory optimization: {}", e.getMessage());
         }
     }
 }

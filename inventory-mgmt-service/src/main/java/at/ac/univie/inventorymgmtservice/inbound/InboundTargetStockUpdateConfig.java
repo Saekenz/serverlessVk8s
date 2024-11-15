@@ -49,7 +49,7 @@ public class InboundTargetStockUpdateConfig {
             String payload,
             @Header(GcpPubSubHeaders.ORIGINAL_MESSAGE) BasicAcknowledgeablePubsubMessage message) {
         log.info("Message arrived! Payload: {}", payload);
-        inventoryService.handleIncomingOrderItem(payload);
+        inventoryService.handleIncomingTargetStockUpdateMessage(payload);
         message.ack();
     }
 }

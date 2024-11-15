@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class CurrentStockUpdateDTO {
+public class InventoryCurrentStockUpdateDTO {
     private Long productId;
     private Long locationId;
     private int newCurrentStock;

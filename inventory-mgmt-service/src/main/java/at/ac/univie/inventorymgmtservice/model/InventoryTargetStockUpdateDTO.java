@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class TargetStockUpdateDTO {
+public class InventoryTargetStockUpdateDTO {
     private Long productId;
     private Long locationId;
     @JsonAlias({"quantity"})
