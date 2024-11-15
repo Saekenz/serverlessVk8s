@@ -21,20 +21,20 @@ import org.springframework.messaging.handler.annotation.Header;
 @Configuration
 @Slf4j
 @RequiredArgsConstructor
-public class InboundConfiguration {
+public class InboundTargetStockUpdateConfig {
     private final PubSubConfiguration pubSubConfiguration;
 
     @Autowired
     private IInventoryService inventoryService;
 
     @Bean
-    public MessageChannel pubsubInputChannel() {
+    public MessageChannel targetStockUpdateInputChannel() {
         return new PublishSubscribeChannel();
     }
 
     @Bean
     public PubSubInboundChannelAdapter targetStockUpdateAdapter(
-            @Qualifier("pubsubInputChannel") MessageChannel inboundChannel,
+            @Qualifier("targetStockUpdateInputChannel") MessageChannel inboundChannel,
             PubSubTemplate pubSubTemplate) {
         PubSubInboundChannelAdapter inboundAdapter = new PubSubInboundChannelAdapter(pubSubTemplate,
                 pubSubConfiguration.getTargetStockSub());
@@ -44,22 +44,10 @@ public class InboundConfiguration {
         return inboundAdapter;
     }
 
-//    @Bean
-//    public PubSubInboundChannelAdapter currentStockUpdateAdapter(
-//            @Qualifier("pubsubInputChannel") MessageChannel inboundChannel,
-//            PubSubTemplate pubSubTemplate) {
-//        PubSubInboundChannelAdapter adapter = new PubSubInboundChannelAdapter(pubSubTemplate,
-//                pubSubConfiguration.getCurrentStockSub());
-//        adapter.setOutputChannel(inboundChannel);
-//        adapter.setAckMode(AckMode.MANUAL);
-//        adapter.setPayloadType(String.class);
-//        return adapter;
-//
-//    }
-
-    @ServiceActivator(inputChannel = "pubsubInputChannel")
+    @ServiceActivator(inputChannel = "targetStockUpdateInputChannel")
     public void messageReceiver(
-            String payload, @Header (GcpPubSubHeaders.ORIGINAL_MESSAGE) BasicAcknowledgeablePubsubMessage message) {
+            String payload,
+            @Header(GcpPubSubHeaders.ORIGINAL_MESSAGE) BasicAcknowledgeablePubsubMessage message) {
         log.info("Message arrived! Payload: {}", payload);
         inventoryService.handleIncomingOrderItem(payload);
         message.ack();
