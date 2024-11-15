@@ -1,5 +1,6 @@
 package at.ac.univie.inventorymgmtservice.service;
 
+import at.ac.univie.inventorymgmtservice.config.PubSubConfiguration;
 import at.ac.univie.inventorymgmtservice.model.Inventory;
 import at.ac.univie.inventorymgmtservice.model.InventoryUpdateDTO;
 import at.ac.univie.inventorymgmtservice.model.StockAlertDTO;
@@ -27,6 +28,9 @@ public class InventoryServiceImpl implements IInventoryService {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private PubSubConfiguration pubSubConfiguration;
 
 
     @Override
@@ -67,7 +71,7 @@ public class InventoryServiceImpl implements IInventoryService {
         try {
             StockAlertDTO stockAlert = new StockAlertDTO(inv.getProductId(), inv.getLocationId(), alertCategory);
             String stockAlertJson = objectMapper.writeValueAsString(stockAlert);
-            messagingGateway.sendToPubSub(stockAlertJson);
+            messagingGateway.sendToPubSub(stockAlertJson, pubSubConfiguration.getAlertTopic());
         } catch (Exception e) {
             log.error("Error while creating stock alert: {}", e.getMessage());
         }
