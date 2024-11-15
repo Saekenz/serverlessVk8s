@@ -76,4 +76,9 @@ public class InventoryServiceImpl implements IInventoryService {
             log.error("Error while creating stock alert: {}", e.getMessage());
         }
     }
+
+    @Override
+    public void handleIncomingStockOptimization(String message) {
+
+    }
 }

@@ -12,5 +12,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class PubSubConfiguration {
     private String alertTopic;
     private String optimizeTopic;
-    private String subscription;
+    private String targetStockSub;
+    private String currentStockSub;
 }

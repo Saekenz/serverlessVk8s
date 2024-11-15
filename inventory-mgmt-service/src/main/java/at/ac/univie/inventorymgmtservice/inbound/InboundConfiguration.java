@@ -33,16 +33,29 @@ public class InboundConfiguration {
     }
 
     @Bean
-    public PubSubInboundChannelAdapter pubSubInboundChannelAdapter(
+    public PubSubInboundChannelAdapter targetStockUpdateAdapter(
             @Qualifier("pubsubInputChannel") MessageChannel inboundChannel,
             PubSubTemplate pubSubTemplate) {
         PubSubInboundChannelAdapter inboundAdapter = new PubSubInboundChannelAdapter(pubSubTemplate,
-                pubSubConfiguration.getSubscription());
+                pubSubConfiguration.getTargetStockSub());
         inboundAdapter.setOutputChannel(inboundChannel);
         inboundAdapter.setAckMode(AckMode.MANUAL);
         inboundAdapter.setPayloadType(String.class);
         return inboundAdapter;
     }
+
+//    @Bean
+//    public PubSubInboundChannelAdapter currentStockUpdateAdapter(
+//            @Qualifier("pubsubInputChannel") MessageChannel inboundChannel,
+//            PubSubTemplate pubSubTemplate) {
+//        PubSubInboundChannelAdapter adapter = new PubSubInboundChannelAdapter(pubSubTemplate,
+//                pubSubConfiguration.getCurrentStockSub());
+//        adapter.setOutputChannel(inboundChannel);
+//        adapter.setAckMode(AckMode.MANUAL);
+//        adapter.setPayloadType(String.class);
+//        return adapter;
+//
+//    }
 
     @ServiceActivator(inputChannel = "pubsubInputChannel")
     public void messageReceiver(
