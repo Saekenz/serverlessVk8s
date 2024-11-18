@@ -9,9 +9,9 @@ import java.util.List;
 
 public interface InventoryRepository extends JpaRepository<Inventory, Long> {
 
-    @Query("SELECT new at.ac.univie.inventoryoptservice.model.InventoryAllocationDTO(i.id, i.currentStock, i.targetStock, i.productId, i.warehouse.id, w.name, l.id,l.latitude, l.longitude) " +
+    @Query("SELECT new at.ac.univie.inventoryoptservice.model.InventoryAllocationDTO(i.id, i.currentStock, " +
+            "i.targetStock, i.productId, l.id, l.name, l.city, l.latitude, l.longitude) " +
             "FROM Inventory i " +
-            "JOIN i.warehouse w " +
-            "JOIN w.location l")
-    List<InventoryAllocationDTO> fetchInventoryWithWarehouseAndLocation();
+            "JOIN i.location l")
+    List<InventoryAllocationDTO> fetchInventoryWithLocation();
 }

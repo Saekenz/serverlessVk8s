@@ -28,8 +28,8 @@ public class Inventory {
     private int targetStock;
 
     @ManyToOne
-    @JoinColumn(name = "warehouse_id")
-    private Warehouse warehouse;
+    @JoinColumn(name = "location_id")
+    private Location location;
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;

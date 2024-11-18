@@ -28,7 +28,7 @@ public class InventoryServiceImpl implements IInventoryService {
 
     @Override
     public ResponseEntity<?> fetchInventoryAllocation() {
-        List<InventoryAllocationDTO> invAllocations = inventoryRepository.fetchInventoryWithWarehouseAndLocation();
+        List<InventoryAllocationDTO> invAllocations = inventoryRepository.fetchInventoryWithLocation();
         return ResponseEntity.ok(invAllocations);
     }
 

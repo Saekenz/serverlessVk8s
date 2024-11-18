@@ -12,9 +12,9 @@ public class InventoryAllocationDTO {
     private int currentStock;
     private int targetStock;
     private Long productId;
-    private Long warehouseId;
-    private String warehouseName;
     private Long locationId;
+    private String locationName;
+    private String locationCity;
     private Double latitude;
     private Double longitude;
 }
