@@ -1,5 +1,6 @@
 package at.ac.univie.inventoryoptservice.model;
 
+import at.ac.univie.inventoryoptservice.optimization.Chromosome;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -17,4 +18,15 @@ public class InventoryAllocationDTO {
     private String locationCity;
     private Double latitude;
     private Double longitude;
+
+    public Chromosome toChromosome() {
+        Chromosome chromosome = new Chromosome();
+        chromosome.setProductId(this.productId);
+        chromosome.setLocationId(this.locationId);
+        chromosome.setCurrentStock(this.currentStock);
+        chromosome.setTargetStock(this.targetStock);
+        chromosome.setLatitude(this.latitude);
+        chromosome.setLongitude(this.longitude);
+        return chromosome;
+    }
 }
