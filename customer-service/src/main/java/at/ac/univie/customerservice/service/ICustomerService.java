@@ -15,4 +15,6 @@ public interface ICustomerService {
     ResponseEntity<?> update(Long id, CustomerDTO customerDTO);
 
     Customer getReferenceById(Long id);
+
+    ResponseEntity<?> generateCustomerData(int count);
 }

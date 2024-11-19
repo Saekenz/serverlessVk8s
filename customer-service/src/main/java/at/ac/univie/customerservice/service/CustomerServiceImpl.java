@@ -3,6 +3,7 @@ package at.ac.univie.customerservice.service;
 import at.ac.univie.customerservice.model.Customer;
 import at.ac.univie.customerservice.model.CustomerDTO;
 import at.ac.univie.customerservice.repository.CustomerRepository;
+import at.ac.univie.customerservice.util.CustomerDataGenerator;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
@@ -85,6 +86,22 @@ public class CustomerServiceImpl implements ICustomerService {
     @Override
     public Customer getReferenceById(Long id) {
         return customerRepository.getReferenceById(id);
+    }
+
+    @Override
+    public ResponseEntity<?> generateCustomerData(int count) {
+        if (count <= 0) return ResponseEntity.badRequest().body("Invalid value for count: " + count);
+
+        CustomerDataGenerator dataGenerator = new CustomerDataGenerator();
+        List<Customer> generatedCustomers = dataGenerator.generateCustomers(count);
+        int numInsertedCustomers = customerRepository.saveAll(generatedCustomers).size();
+
+        if (numInsertedCustomers == count) {
+            return ResponseEntity.ok().build();
+        }
+        else {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
 }
