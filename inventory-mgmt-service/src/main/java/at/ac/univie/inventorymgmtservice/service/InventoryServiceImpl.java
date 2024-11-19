@@ -1,17 +1,25 @@
 package at.ac.univie.inventorymgmtservice.service;
 
 import at.ac.univie.inventorymgmtservice.config.PubSubConfiguration;
+import at.ac.univie.inventorymgmtservice.model.Inventory;
 import at.ac.univie.inventorymgmtservice.model.InventoryCurrentStockUpdateDTO;
 import at.ac.univie.inventorymgmtservice.model.InventoryTargetStockUpdateDTO;
 import at.ac.univie.inventorymgmtservice.model.StockAlertDTO;
 import at.ac.univie.inventorymgmtservice.outbound.OutboundConfiguration;
 import at.ac.univie.inventorymgmtservice.repository.InventoryRepository;
+import at.ac.univie.inventorymgmtservice.repository.LocationRepository;
+import at.ac.univie.inventorymgmtservice.repository.ProductRepository;
+import at.ac.univie.inventorymgmtservice.util.InventoryDataGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @Slf4j
@@ -24,6 +32,12 @@ public class InventoryServiceImpl implements IInventoryService {
 
     @Autowired
     private InventoryRepository inventoryRepository;
+
+    @Autowired
+    private LocationRepository locationRepository;
+
+    @Autowired
+    private ProductRepository productRepository;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -77,6 +91,28 @@ public class InventoryServiceImpl implements IInventoryService {
             log.error("Failed to parse inventory optimization message: {}", e.getMessage());
         } catch (Exception e) {
             log.error("Unexpected error while processing inventory optimization: {}", e.getMessage());
+        }
+    }
+
+    @Override
+    public ResponseEntity<?> generateInventoryData() {
+        InventoryDataGenerator dataGenerator = new InventoryDataGenerator();
+        List<Long> locationIds = locationRepository.getLocationIds();
+        List<Long> productIds = productRepository.getProductIds();
+
+        if (productIds.isEmpty() || locationIds.isEmpty()) {
+            return ResponseEntity.internalServerError().body("Inventory cannot be created if there are no" +
+                    " products/locations stored in the database yet!");
+        }
+
+        List<Inventory> generatedInventories = dataGenerator.generateInventories(locationIds, productIds);
+        int numInsertedInventories = inventoryRepository.saveAll(generatedInventories).size();
+
+        if (numInsertedInventories == locationIds.size() * productIds.size()) {
+            return ResponseEntity.ok().build();
+        }
+        else {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
