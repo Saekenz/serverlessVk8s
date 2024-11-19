@@ -50,6 +50,7 @@ public class InventoryServiceImpl implements IInventoryService {
         population.printPopulation();
 
         // 2a) evaluate fitness of each element in the population
+        population.calculateFitness(initalDNA);
 
         // 2b) create a mating pool (adding fitter elements more often
 

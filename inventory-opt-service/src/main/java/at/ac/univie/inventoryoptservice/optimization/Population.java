@@ -37,26 +37,36 @@ public class Population {
             locationsPerProduct.put(c.getProductId(), locationsPerProduct.getOrDefault(c.getProductId(), 0) + 1);
         }
         uniqueLocations.addAll(uniqueLocationsWithCoords.keySet());
-        this.population.add(dna);
     }
 
     private void generatePermutations(DNA dna, int num) {
         List<DNA> permutations = new ArrayList<>();
-        for (int i = 0; i < num; i++) {
-            System.out.println("permutation " + i);
+        permutations.add(dna);
+        for (int i = 1; i < num; i++) {
             DNA generatedDNA = generatePermutation(dna);
             permutations.add(generatedDNA);
         }
         this.population.addAll(permutations);
     }
 
+    /**
+     *
+     * @param dna The {@link DNA} object for which a permutation is to be created.
+     * @return {@link DNA} object with adjusted current stock values for each {@link Chromosome}.
+     */
     private DNA generatePermutation(DNA dna) {
-        Map<Long, Integer> stockLeft = this.productsInStock;
+        // to keep track of the overall stock left for each product
+        Map<Long, Integer> stockLeft = new HashMap<>(this.productsInStock);
+
+        // to keep track of the number of locations that store each product
+        Map<Long, Integer> locationsLeft = new HashMap<>(this.locationsPerProduct);
 
         DNA permutation = new DNA();
         for (Chromosome c : dna.getChromosomes()) {
-            locationsPerProduct.put(c.getProductId(), locationsPerProduct.get(c.getProductId()) -1);
-            // TODO: clean up code!!!!
+            // decrement the number of locations where the product still needs to be stored
+            locationsLeft.put(c.getProductId(), locationsLeft.get(c.getProductId()) - 1);
+
+            // keep all parameters except for currentStock
             Chromosome newChromosome = new Chromosome();
             newChromosome.setProductId(c.getProductId());
             newChromosome.setLocationId(c.getLocationId());
@@ -64,7 +74,8 @@ public class Population {
             newChromosome.setLatitude(c.getLatitude());
             newChromosome.setLongitude(c.getLongitude());
 
-            if (locationsPerProduct.get(c.getProductId()) == 0) {
+            // if the last location containing the product is reached use all remaining stock
+            if (locationsLeft.get(c.getProductId()) == 0) {
                 newChromosome.setCurrentStock(stockLeft.get(c.getProductId()));
                 stockLeft.put(c.getProductId(), 0);
             } else {
@@ -78,7 +89,14 @@ public class Population {
         return permutation;
     }
 
+    public void calculateFitness(DNA originalDNA) {
+        for (DNA dna : population) {
+            dna.calculateFitness(originalDNA);
+        }
+    }
+
     public void printPopulation() {
+        System.out.println("==================================== Population =========================================");
         for (DNA dna : population) {
             System.out.println("=================== DNA ==================");
             for (Chromosome c : dna.getChromosomes()) {
@@ -86,5 +104,4 @@ public class Population {
             }
         }
     }
-
 }

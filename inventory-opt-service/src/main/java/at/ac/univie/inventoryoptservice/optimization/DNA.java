@@ -12,9 +12,16 @@ import java.util.List;
 @AllArgsConstructor
 public class DNA {
     private List<Chromosome> chromosomes;
+    private double fitness;
 
     public DNA() {
         this.chromosomes = new ArrayList<>();
+        this.fitness = 0.0;
+    }
+
+    public DNA(List<Chromosome> chromosomes) {
+        this.chromosomes = chromosomes;
+        this.fitness = 0.0;
     }
 
     public void addChromosome(Chromosome chromosome) {
@@ -30,5 +37,10 @@ public class DNA {
             str.append("\n");
         }
         return str.toString();
+    }
+
+    public void calculateFitness(DNA originalDNA) {
+        // calculate fitness of this allocation based on the initial distribution
+        // factor in capacity utilization & distance that products need to travel
     }
 }
