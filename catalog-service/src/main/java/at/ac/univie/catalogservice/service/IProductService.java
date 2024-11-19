@@ -15,4 +15,6 @@ public interface IProductService {
     ResponseEntity<?> update(Long id, ProductDTO productDTO);
 
     Product getReferenceById(Long id);
+
+    ResponseEntity<?> generateProductData(int count);
 }

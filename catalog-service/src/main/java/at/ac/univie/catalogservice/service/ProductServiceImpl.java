@@ -2,7 +2,9 @@ package at.ac.univie.catalogservice.service;
 
 import at.ac.univie.catalogservice.model.Product;
 import at.ac.univie.catalogservice.model.ProductDTO;
+import at.ac.univie.catalogservice.repository.CategoryRepository;
 import at.ac.univie.catalogservice.repository.ProductRepository;
+import at.ac.univie.catalogservice.util.ProductDataGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpHeaders;
@@ -19,6 +21,9 @@ public class ProductServiceImpl implements IProductService {
 
     @Autowired
     private ProductRepository productRepository;
+
+    @Autowired
+    private CategoryRepository categoryRepository;
 
     @Autowired
     private Environment env;
@@ -81,5 +86,28 @@ public class ProductServiceImpl implements IProductService {
     @Override
     public Product getReferenceById(Long id) {
         return productRepository.getReferenceById(id);
+    }
+
+    @Override
+    public ResponseEntity<?> generateProductData(int count) {
+        if (count <= 0) return ResponseEntity.badRequest().body("Invalid value for count: " + count);
+
+        ProductDataGenerator dataGenerator = new ProductDataGenerator();
+        List<Long> categoryIds = categoryRepository.getCategories();
+
+        if (categoryIds.isEmpty()) {
+            return ResponseEntity.internalServerError().body("Products cannot be added if no categories have" +
+                    " been created yet!");
+        }
+
+        List<Product> generatedProducts = dataGenerator.generateProducts(count, categoryIds);
+        int numInsertedProducts = productRepository.saveAll(generatedProducts).size();
+
+        if (numInsertedProducts == count) {
+            return ResponseEntity.ok().build();
+        }
+        else {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 }
