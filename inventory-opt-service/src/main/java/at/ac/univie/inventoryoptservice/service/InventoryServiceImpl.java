@@ -48,8 +48,8 @@ public class InventoryServiceImpl implements IInventoryService {
         System.out.println(initalDNA);
 
         // 1b) create a population (permutations of input data)
-        Population population = new Population();
-        population.initializePopulation(initalDNA, config.getPopulationSize());
+        Population population = new Population(initalDNA, config.getMutationRate());
+        population.initializePopulation(config.getPopulationSize());
         population.printPopulation();
 
         // 2a) evaluate fitness of each element in the population - LOOP
@@ -59,14 +59,10 @@ public class InventoryServiceImpl implements IInventoryService {
         population.generateCrossoverPool();
 
         // 3a) pick 2 elements from the pool - LOOP
-        population.crossover();
-
-
         // 3b) crossover the 2 parent elements to create a new element
-
         // 3c) mutate the new element based on the mutation probability
-
         // 3d) add the new element to a new population and repeat the process from 3a)
+        population.generateNextGeneration();
 
         // 4) replace the old population with the new one and repeat the process from step 2a)
 

@@ -8,26 +8,27 @@ import java.util.*;
 @Data
 @AllArgsConstructor
 public class Population {
+    private DNA initialDNA;
+    private double mutationRate;
     private List<DNA> population;
     private List<DNA> crossoverPool;
 
     private Map<Long, Integer> productsInStock;
     private Map<Long, Integer> locationsPerProduct;
-    private Map<Long, Coordinates> uniqueLocationsWithCoords;
-    private Set<Long> uniqueLocations;
+
     private Random rand;
 
-    public Population() {
+    public Population(DNA initialDNA, double mutationRate) {
+        this.initialDNA = initialDNA;
+        this.mutationRate = mutationRate;
         this.population = new ArrayList<>();
         this.crossoverPool = new ArrayList<>();
         this.productsInStock = new HashMap<>();
         this.locationsPerProduct = new HashMap<>();
-        this.uniqueLocationsWithCoords = new HashMap<>();
-        this.uniqueLocations = new HashSet<>();
         this.rand = new Random();
     }
 
-    public void initializePopulation(DNA initialDNA, int populationSize) {
+    public void initializePopulation(int populationSize) {
         setProductsAndLocations(initialDNA);
         generatePermutations(initialDNA, populationSize);
     }
@@ -36,10 +37,8 @@ public class Population {
         for (Chromosome c : dna.getChromosomes()) {
             int oldQuantityInStock = productsInStock.getOrDefault(c.getProductId(), 0);
             productsInStock.put(c.getProductId(), oldQuantityInStock + c.getCurrentStock());
-            uniqueLocationsWithCoords.putIfAbsent(c.getLocationId(), new Coordinates(c.getLatitude(), c.getLongitude()));
             locationsPerProduct.put(c.getProductId(), locationsPerProduct.getOrDefault(c.getProductId(), 0) + 1);
         }
-        uniqueLocations.addAll(uniqueLocationsWithCoords.keySet());
     }
 
     /**
@@ -102,6 +101,7 @@ public class Population {
     public void calculateFitness(DNA originalDNA) {
         for (DNA dna : population) {
             dna.calculateFitness(originalDNA);
+            System.out.println("Calculated fitness: " + dna.getFitness());
         }
     }
 
@@ -144,36 +144,18 @@ public class Population {
         }
     }
 
-    public void crossover() {
-        DNA parent1 = crossoverPool.get(rand.nextInt(crossoverPool.size()));
-        DNA parent2 = crossoverPool.get(rand.nextInt(crossoverPool.size()));
+    public void generateNextGeneration() {
+        for (int i = 0; i < population.size(); i++) {
+            // pick 2 random objects from the crossover pool
+            DNA parent1 = crossoverPool.get(rand.nextInt(crossoverPool.size()));
+            DNA parent2 = crossoverPool.get(rand.nextInt(crossoverPool.size()));
 
-        DNA child = new DNA();
+            // perform crossover & mutation
+            DNA child = parent1.crossover(parent2);
+            child.mutate(mutationRate);
 
-        Set<Long> productsTakenFromParent1 = new HashSet<>();
-        Set<Long> productsTakenFromParent2 = new HashSet<>();
-
-        for (Long productId : productsInStock.keySet()) {
-            if (rand.nextBoolean()) {
-                productsTakenFromParent1.add(productId);
-            }
-            else {
-                productsTakenFromParent2.add(productId);
-            }
-        }
-
-        for (int i = 0; i < parent1.getChromosomes().size(); i++) {
-            if (productsTakenFromParent1.contains(parent1.getChromosomes().get(i).getProductId())) {
-                child.addChromosome(parent1.getChromosomes().get(i));
-            }
-            if (productsTakenFromParent2.contains(parent2.getChromosomes().get(i).getProductId())) {
-                child.addChromosome(parent2.getChromosomes().get(i));
-            }
-        }
-        System.out.println("Crossover created child with size " + child.getChromosomes().size());
-        System.out.println("=================== Child DNA ==================");
-        for (Chromosome c : child.getChromosomes()) {
-            System.out.println(c.toString());
+            // add the newly created DNA object the "new" population
+            population.set(i, child);
         }
     }
 }
