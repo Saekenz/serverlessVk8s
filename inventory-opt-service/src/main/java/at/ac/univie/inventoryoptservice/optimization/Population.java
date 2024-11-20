@@ -104,4 +104,16 @@ public class Population {
             }
         }
     }
+
+    /**
+     * Picks and returns the best DNA contained in this population.
+     *
+     * @return The {@link DNA} object with the highest fitness found in this {@code population} or a default {@link DNA}
+     * object if no best {@link DNA} object could be found.
+     */
+    public DNA findFittestDNA() {
+        return this.population.stream()
+                .max(Comparator.comparingDouble(DNA::getFitness))
+                .orElse(new DNA());
+    }
 }

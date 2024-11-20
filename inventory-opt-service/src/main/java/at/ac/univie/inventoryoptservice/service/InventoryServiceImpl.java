@@ -2,7 +2,7 @@ package at.ac.univie.inventoryoptservice.service;
 
 import at.ac.univie.inventoryoptservice.model.InventoryAllocationDTO;
 import at.ac.univie.inventoryoptservice.config.PubSubConfiguration;
-import at.ac.univie.inventoryoptservice.model.StockUpdateDTO;
+import at.ac.univie.inventoryoptservice.model.StockOptimizationDTO;
 import at.ac.univie.inventoryoptservice.optimization.*;
 import at.ac.univie.inventoryoptservice.outbound.OutboundConfiguration;
 import at.ac.univie.inventoryoptservice.repository.InventoryRepository;
@@ -28,6 +28,9 @@ public class InventoryServiceImpl implements IInventoryService {
     @Autowired
     private PubSubConfiguration pubSubConfiguration;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
     @Override
     public ResponseEntity<?> fetchInventoryAllocation() {
         List<InventoryAllocationDTO> invAllocations = inventoryRepository.fetchInventoryWithLocation();
@@ -52,9 +55,9 @@ public class InventoryServiceImpl implements IInventoryService {
         // 2a) evaluate fitness of each element in the population
         population.calculateFitness(initalDNA);
 
-        // 2b) create a mating pool (adding fitter elements more often
+        // 2b) create a pool for roulette wheel selection (adding fitter elements more often)
 
-        // 3a) pick 2 elements from the mating pool
+        // 3a) pick 2 elements from the pool
 
         // 3b) crossover the 2 parent elements to create a new element
 
@@ -64,6 +67,15 @@ public class InventoryServiceImpl implements IInventoryService {
 
         // 4) replace the old population with the new one and repeat the process from step 2a)
 
+        // 5) pick the fittest element of the final generation
+        DNA bestDNA = population.findFittestDNA();
+
+        // 6) create stock optimization messages
+        List<String> stockOptimizationMessages = createStockOptimizationMessagesFromDNA(bestDNA);
+
+        // 7) send the messages to the optimization topic
+//        sendStockOptimizationMessages(stockOptimizationMessages);
+        sendOptMessagesTest();
     }
 
     private OptimizationConfig parseOptimizationMessage(String message) {
@@ -84,16 +96,53 @@ public class InventoryServiceImpl implements IInventoryService {
                 .toList();
     }
 
-    private InventoryAllocationDTO optimizeAllocation(InventoryAllocationDTO invAllocation) {
-        InventoryAllocationDTO newAllocation = new InventoryAllocationDTO();
-        return newAllocation;
+    private List<StockOptimizationDTO> createStockOptimizationFromDNA(DNA dna) {
+        return dna.getChromosomes().stream()
+                .map(Chromosome::toStockOptimizationDTO)
+                .toList();
     }
+
+    private List<String> createStockOptimizationMessagesFromDNA(DNA bestDNA) {
+        // convert each Chromosome in DNA to StockOptimizationDTO
+        List<StockOptimizationDTO> stockOptimizations = createStockOptimizationFromDNA(bestDNA);
+
+        // build optimization messages based on list of StockOptimizationDTO
+        return buildStockOptimizationMessages(stockOptimizations);
+    }
+
+    private List<String> buildStockOptimizationMessages (List<StockOptimizationDTO> stockOptimizationDTOs) {
+        return stockOptimizationDTOs.stream()
+                .map(this::buildStockOptimizationMessage)
+                .toList();
+    }
+
+    private String buildStockOptimizationMessage (StockOptimizationDTO stockOptimizationDTO) {
+        try {
+            return objectMapper.writeValueAsString(stockOptimizationDTO);
+        } catch (JsonProcessingException e) {
+            log.error("Error while parsing stock optimization: {}", e.getMessage());
+            return "";
+        }
+    }
+
+    private void sendStockOptimizationMessages(List<String> stockOptimizationMessages) {
+        if (!stockOptimizationMessages.contains("")) {
+            int counter = 0;
+            for (String stockOptimizationMessage : stockOptimizationMessages) {
+                counter++;
+                messagingGateway.sendToPubSub(stockOptimizationMessage, pubSubConfiguration.getTopic());
+                log.info("Sent stock optimization message {}: {}", counter, stockOptimizationMessage);
+            }
+            log.info("Stock optimization message sent: {}", counter);
+        }
+    }
+
 
     @Override
     public ResponseEntity<?> pubsubTest() {
         try {
-            StockUpdateDTO stockUpdateDTO = new StockUpdateDTO(1L, 3L, 33);
-            String stockUpdateJson = new ObjectMapper().writeValueAsString(stockUpdateDTO);
+            StockOptimizationDTO stockOptimizationDTO = new StockOptimizationDTO(1L, 3L, 33);
+            String stockUpdateJson = new ObjectMapper().writeValueAsString(stockOptimizationDTO);
 
             messagingGateway.sendToPubSub(stockUpdateJson, pubSubConfiguration.getTopic());
             return ResponseEntity.ok().body(stockUpdateJson);
@@ -101,5 +150,27 @@ public class InventoryServiceImpl implements IInventoryService {
             log.error(e.getMessage());
             return ResponseEntity.internalServerError().body(e.getMessage());
         }
+    }
+
+    private void sendOptMessagesTest() {
+        String msg1 = "{"
+                + "\"productId\":105,"
+                + "\"locationId\":12,"
+                + "\"newCurrentStock\":77"
+                + "}";
+
+        String msg2 = "{"
+                + "\"productId\":103,"
+                + "\"locationId\":12,"
+                + "\"newCurrentStock\":14"
+                + "}";
+
+        String msg3 = "{"
+                + "\"productId\":107,"
+                + "\"locationId\":12,"
+                + "\"newCurrentStock\":23"
+                + "}";
+
+        sendStockOptimizationMessages(List.of(msg1, msg2, msg3));
     }
 }
