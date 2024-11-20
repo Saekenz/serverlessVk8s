@@ -52,12 +52,15 @@ public class InventoryServiceImpl implements IInventoryService {
         population.initializePopulation(initalDNA, config.getPopulationSize());
         population.printPopulation();
 
-        // 2a) evaluate fitness of each element in the population
+        // 2a) evaluate fitness of each element in the population - LOOP
         population.calculateFitness(initalDNA);
 
         // 2b) create a pool for roulette wheel selection (adding fitter elements more often)
+        population.generateCrossoverPool();
 
-        // 3a) pick 2 elements from the pool
+        // 3a) pick 2 elements from the pool - LOOP
+        population.crossover();
+
 
         // 3b) crossover the 2 parent elements to create a new element
 
@@ -74,8 +77,8 @@ public class InventoryServiceImpl implements IInventoryService {
         List<String> stockOptimizationMessages = createStockOptimizationMessagesFromDNA(bestDNA);
 
         // 7) send the messages to the optimization topic
-//        sendStockOptimizationMessages(stockOptimizationMessages);
-        sendOptMessagesTest();
+        sendStockOptimizationMessages(stockOptimizationMessages);
+//        sendOptMessagesTest();
     }
 
     private OptimizationConfig parseOptimizationMessage(String message) {

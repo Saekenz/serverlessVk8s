@@ -6,6 +6,7 @@ import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 @Getter
 @Setter
@@ -40,7 +41,9 @@ public class DNA {
     }
 
     public void calculateFitness(DNA originalDNA) {
+        // TODO: IMPLEMENT
         // calculate fitness of this allocation based on the initial distribution
         // factor in capacity utilization & distance that products need to travel
+        fitness = new Random().nextDouble(5000);
     }
 }
