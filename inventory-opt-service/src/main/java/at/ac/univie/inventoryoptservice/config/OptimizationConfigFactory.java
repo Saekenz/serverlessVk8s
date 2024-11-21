@@ -1,4 +1,4 @@
-package at.ac.univie.inventoryoptservice.optimization;
+package at.ac.univie.inventoryoptservice.config;
 
 public class OptimizationConfigFactory {
 

@@ -1,5 +1,7 @@
 package at.ac.univie.inventoryoptservice.service;
 
+import at.ac.univie.inventoryoptservice.config.OptimizationConfig;
+import at.ac.univie.inventoryoptservice.config.OptimizationConfigFactory;
 import at.ac.univie.inventoryoptservice.model.InventoryAllocationDTO;
 import at.ac.univie.inventoryoptservice.config.PubSubConfiguration;
 import at.ac.univie.inventoryoptservice.model.StockOptimizationDTO;
@@ -15,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Slf4j
@@ -52,6 +55,15 @@ public class InventoryServiceImpl implements IInventoryService {
         population.initializePopulation(config.getPopulationSize());
         population.printPopulation();
 
+
+        // TEST Distance Matrix creation
+        System.out.println(population.getUniqueLocations());
+        Map<LocationPair, Double> distanceMatrix = population.getDistanceMatrix();
+        for (Map.Entry<LocationPair, Double> entry : distanceMatrix.entrySet()) {
+            System.out.println(entry.getKey() + " " + entry.getValue());
+        }
+
+
         // 2a) evaluate fitness of each element in the population - LOOP
         population.calculateFitness(initalDNA);
 
@@ -73,7 +85,7 @@ public class InventoryServiceImpl implements IInventoryService {
         List<String> stockOptimizationMessages = createStockOptimizationMessagesFromDNA(bestDNA);
 
         // 7) send the messages to the optimization topic
-        sendStockOptimizationMessages(stockOptimizationMessages);
+//        sendStockOptimizationMessages(stockOptimizationMessages);
 //        sendOptMessagesTest();
     }
 

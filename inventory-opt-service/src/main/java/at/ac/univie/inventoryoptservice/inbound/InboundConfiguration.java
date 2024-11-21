@@ -48,7 +48,6 @@ public class InboundConfiguration {
     public void messageReceiver(
             String payload, @Header(GcpPubSubHeaders.ORIGINAL_MESSAGE) BasicAcknowledgeablePubsubMessage message) {
         log.info("Message arrived! Payload: {}", payload);
-        // TODO: handle incoming optimization message
         inventoryService.handleIncomingOptimizationMessage(payload);
         message.ack();
     }

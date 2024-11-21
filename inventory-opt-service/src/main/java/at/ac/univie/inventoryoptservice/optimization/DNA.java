@@ -42,13 +42,6 @@ public class DNA {
         return str.toString();
     }
 
-    public void calculateFitness(DNA originalDNA) {
-        // TODO: IMPLEMENT
-        // calculate fitness of this allocation based on the initial distribution
-        // factor in capacity utilization & distance that products need to travel
-        fitness = new Random().nextDouble(5000);
-    }
-
     public DNA crossover(DNA otherParent) {
         DNA child = new DNA();
 
@@ -116,4 +109,37 @@ public class DNA {
         // pick a random chromosome from the list
         return foundChromosomes.get(RANDOM.nextInt(foundChromosomes.size()));
     }
+
+    public void calculateFitness(DNA originalDNA) {
+        // TODO: IMPLEMENT
+        // calculate fitness of this allocation based on the initial distribution
+        // factor in capacity utilization & distance that products need to travel
+        fitness = calculateDemandCoverage();
+    }
+
+    private double calculateDemandCoverage() {
+        double demandCoverageSum = 0.0;
+
+        for (Chromosome chromosome : chromosomes) {
+            if (chromosome.getCurrentStock() < chromosome.getTargetStock()) {
+                demandCoverageSum += (double) chromosome.getCurrentStock() / chromosome.getTargetStock();
+            }
+            else {
+                demandCoverageSum += (double) chromosome.getTargetStock() / chromosome.getCurrentStock();
+            }
+        }
+
+        return demandCoverageSum / chromosomes.size();
+    }
+
+    private double calculateDistanceMoved() {
+        // TODO: implement
+        // 1  Calculate distances for each unique Location pair
+        // 2  Compare product stock for each chromosome in initial DNA and current this DNA
+        // 2a For each chromosome find if stock was added or removed
+        // 3  Calculate distance stock for each product had to be moved from initial DNA to current DNA
+        return 200.0;
+
+    }
+
 }

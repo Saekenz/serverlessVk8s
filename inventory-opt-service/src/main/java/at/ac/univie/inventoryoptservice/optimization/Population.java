@@ -1,5 +1,6 @@
 package at.ac.univie.inventoryoptservice.optimization;
 
+import at.ac.univie.inventoryoptservice.util.DistanceCalculator;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -10,35 +11,51 @@ import java.util.*;
 public class Population {
     private DNA initialDNA;
     private double mutationRate;
+    private int generations;
     private List<DNA> population;
     private List<DNA> crossoverPool;
 
     private Map<Long, Integer> productsInStock;
     private Map<Long, Integer> locationsPerProduct;
 
+    private List<SimpleLocation> uniqueLocations;
+    private Map<LocationPair, Double> distanceMatrix;
+
     private Random rand;
 
     public Population(DNA initialDNA, double mutationRate) {
         this.initialDNA = initialDNA;
         this.mutationRate = mutationRate;
+        this.generations = 0;
         this.population = new ArrayList<>();
         this.crossoverPool = new ArrayList<>();
         this.productsInStock = new HashMap<>();
         this.locationsPerProduct = new HashMap<>();
+        this.uniqueLocations = new ArrayList<>();
+        this.distanceMatrix = new HashMap<>();
         this.rand = new Random();
     }
 
     public void initializePopulation(int populationSize) {
         setProductsAndLocations(initialDNA);
+        calculateDistanceMatrix();
         generatePermutations(initialDNA, populationSize);
     }
 
+    private void calculateDistanceMatrix() {
+        DistanceCalculator distanceCalculator = new DistanceCalculator();
+        this.distanceMatrix = distanceCalculator.calculateDistanceMatrix(uniqueLocations);
+    }
+
     private void setProductsAndLocations(DNA dna) {
+        Set<SimpleLocation> uniqueLocationsTemp = new HashSet<>();
         for (Chromosome c : dna.getChromosomes()) {
             int oldQuantityInStock = productsInStock.getOrDefault(c.getProductId(), 0);
             productsInStock.put(c.getProductId(), oldQuantityInStock + c.getCurrentStock());
             locationsPerProduct.put(c.getProductId(), locationsPerProduct.getOrDefault(c.getProductId(), 0) + 1);
+            uniqueLocationsTemp.add(new SimpleLocation(c.getLocationId(), c.getLatitude(), c.getLongitude()));
         }
+        this.uniqueLocations = new ArrayList<>(uniqueLocationsTemp);
     }
 
     /**
@@ -88,6 +105,7 @@ public class Population {
                 newChromosome.setCurrentStock(stockLeft.get(c.getProductId()));
                 stockLeft.put(c.getProductId(), 0);
             } else {
+                // pick a random number from the total stock that is left for this product
                 int newCurrentStock = rand.nextInt(stockLeft.get(c.getProductId()) + 1);
                 newChromosome.setCurrentStock(newCurrentStock);
                 stockLeft.put(c.getProductId(), stockLeft.get(c.getProductId()) - newCurrentStock);
@@ -144,6 +162,11 @@ public class Population {
         }
     }
 
+    /**
+     * Replaces the current population with a new one by creating new {@link DNA} objects through crossover
+     * and mutation. Increments the {@code generations} count for each call.
+     *
+     */
     public void generateNextGeneration() {
         for (int i = 0; i < population.size(); i++) {
             // pick 2 random objects from the crossover pool
@@ -157,5 +180,6 @@ public class Population {
             // add the newly created DNA object the "new" population
             population.set(i, child);
         }
+        generations++;
     }
 }
