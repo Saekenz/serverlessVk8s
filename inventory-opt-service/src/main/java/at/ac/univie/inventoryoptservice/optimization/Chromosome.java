@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Chromosome {
+    private Long id;
     private Long productId;
     private Long locationId;
     private int currentStock;

@@ -94,6 +94,7 @@ public class Population {
 
             // keep all parameters except for currentStock
             Chromosome newChromosome = new Chromosome();
+            newChromosome.setId(c.getId());
             newChromosome.setProductId(c.getProductId());
             newChromosome.setLocationId(c.getLocationId());
             newChromosome.setTargetStock(c.getTargetStock());
@@ -116,9 +117,15 @@ public class Population {
         return permutation;
     }
 
+    /**
+     * Determines the fitness of each {@link DNA} object in the population.
+     *
+     * @param originalDNA The original distribution of products to locations currently stored in the database.
+     *                    Used to find product movements & calculate distances travelled.
+     */
     public void calculateFitness(DNA originalDNA) {
         for (DNA dna : population) {
-            dna.calculateFitness(originalDNA);
+            dna.calculateFitness(originalDNA, distanceMatrix);
             System.out.println("Calculated fitness: " + dna.getFitness());
         }
     }

@@ -21,6 +21,7 @@ public class InventoryAllocationDTO {
 
     public Chromosome toChromosome() {
         Chromosome chromosome = new Chromosome();
+        chromosome.setId(id);
         chromosome.setProductId(this.productId);
         chromosome.setLocationId(this.locationId);
         chromosome.setCurrentStock(this.currentStock);

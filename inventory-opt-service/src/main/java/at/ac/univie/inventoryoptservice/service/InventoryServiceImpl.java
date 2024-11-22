@@ -57,11 +57,11 @@ public class InventoryServiceImpl implements IInventoryService {
 
 
         // TEST Distance Matrix creation
-        System.out.println(population.getUniqueLocations());
-        Map<LocationPair, Double> distanceMatrix = population.getDistanceMatrix();
-        for (Map.Entry<LocationPair, Double> entry : distanceMatrix.entrySet()) {
-            System.out.println(entry.getKey() + " " + entry.getValue());
-        }
+//        System.out.println(population.getUniqueLocations());
+//        Map<LocationPair, Double> distanceMatrix = population.getDistanceMatrix();
+//        for (Map.Entry<LocationPair, Double> entry : distanceMatrix.entrySet()) {
+//            System.out.println(entry.getKey() + " " + entry.getValue());
+//        }
 
 
         // 2a) evaluate fitness of each element in the population - LOOP
