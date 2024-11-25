@@ -141,27 +141,31 @@ public class DNA {
         return demandCoverageSum / chromosomes.size();
     }
 
+    /**
+     * Calculates the total distance required to move products from the original allocation to the current allocation.
+     *
+     * @param originalDNA The original allocation of products as found in the database.
+     * @param distanceMatrix The distances between each pair of locations between which products can be moved.
+     * @return A double value that represents the sum of the distances that must be traveled to move the products
+     * to reach this current allocation.
+     */
     private double calculateDistanceMoved(DNA originalDNA, Map<LocationPair, Double> distanceMatrix) {
-        // TODO: implement
-        // 1  Calculate distances for each unique Location pair
-        // 2  Compare product stock for each chromosome in initial DNA and current this DNA
-        // 2a For each chromosome find if stock was added or removed
-        // 3  Calculate distance stock for each product had to be moved from initial DNA to current DNA
         double totalDistance = 0.0;
+        int productTransferCount = 0;
+
+        // create collections to keep track of stock changes for each product at each location
         Map<Long, List<StockChange>> surplusMap = new HashMap<>();
         Map<Long, List<StockChange>> deficitMap = new HashMap<>();
 
-        log.warn("Step 1");
         // get original and current chromosomes
         ArrayList<Chromosome> originalChromosomes = new ArrayList<>(originalDNA.getChromosomes());
         ArrayList<Chromosome> currentChromosomes = new ArrayList<>(this.chromosomes);
 
-        // sort original and current DNA by their unique identifier
+        // sort original and current chromosomes by their unique identifier
         originalChromosomes.sort(Comparator.comparing(Chromosome::getId));
         currentChromosomes.sort(Comparator.comparing(Chromosome::getId));
 
-        log.warn("Step 2");
-        // calculate stock increases and decreases for each product
+        // calculate stock increases and decreases for each product/location
         for (int i = 0; i < originalChromosomes.size(); i++) {
             Chromosome originalChromosome = originalChromosomes.get(i);
             Chromosome currentChromosome = currentChromosomes.get(i);
@@ -170,7 +174,7 @@ public class DNA {
             Long locationId = originalChromosome.getLocationId();
             int stockChange = currentChromosome.getCurrentStock() - originalChromosome.getCurrentStock();
 
-            // create maps containing locations where products were added/removed
+            // create maps containing locations where products were added/removed for each product
             if (stockChange > 0) {
                 surplusMap.computeIfAbsent(productId, k -> new ArrayList<>())
                         .add(new StockChange(locationId, stockChange));
@@ -180,39 +184,41 @@ public class DNA {
             }
         }
 
-        log.warn("Step 3");
+        // loop through stock changes for each product
         for (Long productId : surplusMap.keySet()) {
             List<StockChange> stockSurpluses = surplusMap.get(productId);
             List<StockChange> stockDeficits = deficitMap.get(productId);
 
+            // if a product had no transfers skip this product
             if (stockSurpluses == null || stockDeficits == null) {
                 continue;
             }
 
-            if (stockSurpluses.isEmpty()) continue;
+            // determine product movements form original allocation (DNA) to this allocation (DNA)
             for (StockChange stockSurplus : stockSurpluses) {
-                if (stockDeficits.isEmpty()) continue; // if a location had no transfers this list is empty
                 for (StockChange stockDeficit : stockDeficits) {
+                    // continue to the next location if all transfers for this location have been found
                     if (stockSurplus.quantity == 0 || stockDeficit.quantity == 0) {
                         continue;
                     }
 
                     int transferQty = Math.min(stockSurplus.quantity, stockDeficit.quantity);
-//                    double transferDistance = distanceMatrix.get(new LocationPair(stockSurplus.getLocationId(),
-//                            stockDeficit.getLocationId())); TODO: FIX EXCEPTION
-                    double transferDistance = 50.0;
+                    double transferDistance = distanceMatrix.get(new LocationPair(stockSurplus.getLocationId(),
+                            stockDeficit.getLocationId()));
                     log.info("{} of product with ID {} was transferred from Location {} to Location {} " +
                             "over a distance of {} km!", transferQty, productId, stockDeficit.getLocationId(),
                             stockSurplus.getLocationId(), transferDistance);
 
                     totalDistance += transferDistance;
+                    productTransferCount++;
 
                     stockSurplus.quantity -= transferQty;
                     stockDeficit.quantity -= transferQty;
                 }
             }
         }
-        log.info("Total distance travelled to move products: {}", totalDistance);
+        log.info("Total distance travelled to move products: {} km with {} transfers.", totalDistance,
+                productTransferCount);
         return totalDistance;
     }
 }

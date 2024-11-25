@@ -26,13 +26,20 @@ public class DistanceCalculator {
         return 2 * EARTH_RADIUS * Math.asin(Math.sqrt(havTheta));
     }
 
-    // calculate distance between locations for all possible location combinations
+    /**
+     * Calculates distance in km for every {@link SimpleLocation} contained in the given {@link List}.
+     *
+     * @param locations {@link List} containing the {@link SimpleLocation} objects.
+     * @return Distance in km between every {@link SimpleLocation} location pair that can be created from the given
+     * {@link List} (if location pair consists of the same {@link SimpleLocation} the calculated distance is 0.0).
+     */
     public Map<LocationPair, Double> calculateDistanceMatrix(List<SimpleLocation> locations) {
         Map<LocationPair, Double> distanceMatrix = new HashMap<>();
 
-        for (int i = 0; i < locations.size() - 1; i++) {
+        // allow distance calculation between same location (results in distance = 0.0)
+        for (int i = 0; i < locations.size(); i++) {
             SimpleLocation fromLocation = locations.get(i);
-            for (int j = i + 1; j < locations.size(); j++) {
+            for (int j = i; j < locations.size(); j++) {
                 SimpleLocation toLocation = locations.get(j);
                 double distance = calculateDistanceBetweenLocationsInKm(fromLocation.getLatitude(),
                         fromLocation.getLongitude(), toLocation.getLatitude(), toLocation.getLongitude());
