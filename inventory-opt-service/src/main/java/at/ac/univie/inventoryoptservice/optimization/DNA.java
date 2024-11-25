@@ -77,15 +77,18 @@ public class DNA {
             }
         }
 
-        System.out.println("Crossover created child with size " + child.getChromosomes().size());
-        System.out.println("=================== Child DNA ==================");
-        for (Chromosome c : child.getChromosomes()) {
-            System.out.println(c.toString());
-        }
+        log.debug("Created child with crossover!");
 
         return child;
     }
 
+    /**
+     * Mutates this {@link DNA} object by randomly swapping the stock levels of contained {@link Chromosome}
+     * based on the {@code mutationRate}.
+     *
+     * @param mutationRate The probability that is used on each {@link Chromosome} to determine if mutation is to be
+     *                     applied.
+     */
     public void mutate(double mutationRate) {
         for (Chromosome c1 : chromosomes) {
             if (RANDOM.nextDouble() < mutationRate) {
@@ -96,7 +99,7 @@ public class DNA {
                     int helperStock = c1.getCurrentStock();
                     c1.setCurrentStock(c2.getCurrentStock());
                     c2.setCurrentStock(helperStock);
-                    log.info("Mutated chromosome {} {} with {} {}", c1.getProductId(), c1.getLocationId(),
+                    log.debug("Mutated chromosome {} {} with {} {}", c1.getProductId(), c1.getLocationId(),
                             c2.getProductId(), c2.getLocationId());
                 }
             }
@@ -122,7 +125,7 @@ public class DNA {
         // calculate fitness of this allocation based on the initial distribution
         // factor in capacity utilization & distance that products need to travel
         fitness = calculateDemandCoverage();
-        log.info("Fitness: {}", fitness);
+        log.debug("Fitness (demand coverage): {}", fitness);
         calculateDistanceMoved(originalDNA, distanceMatrix);
     }
 
@@ -205,9 +208,9 @@ public class DNA {
                     int transferQty = Math.min(stockSurplus.quantity, stockDeficit.quantity);
                     double transferDistance = distanceMatrix.get(new LocationPair(stockSurplus.getLocationId(),
                             stockDeficit.getLocationId()));
-                    log.info("{} of product with ID {} was transferred from Location {} to Location {} " +
-                            "over a distance of {} km!", transferQty, productId, stockDeficit.getLocationId(),
-                            stockSurplus.getLocationId(), transferDistance);
+//                    log.info("{} of product with ID {} was transferred from Location {} to Location {} " +
+//                            "over a distance of {} km!", transferQty, productId, stockDeficit.getLocationId(),
+//                            stockSurplus.getLocationId(), transferDistance);
 
                     totalDistance += transferDistance;
                     productTransferCount++;
@@ -217,7 +220,7 @@ public class DNA {
                 }
             }
         }
-        log.info("Total distance travelled to move products: {} km with {} transfers.", totalDistance,
+        log.debug("Total distance travelled to move products: {} km with {} transfers.", totalDistance,
                 productTransferCount);
         return totalDistance;
     }

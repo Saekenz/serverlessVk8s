@@ -3,11 +3,13 @@ package at.ac.univie.inventoryoptservice.optimization;
 import at.ac.univie.inventoryoptservice.util.DistanceCalculator;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
 
 @Data
 @AllArgsConstructor
+@Slf4j
 public class Population {
     private DNA initialDNA;
     private double mutationRate;
@@ -112,6 +114,7 @@ public class Population {
                 stockLeft.put(c.getProductId(), stockLeft.get(c.getProductId()) - newCurrentStock);
             }
 
+            // add the newly created Chromosome to the new DNA object
             permutation.addChromosome(newChromosome);
         }
         return permutation;
@@ -119,14 +122,12 @@ public class Population {
 
     /**
      * Determines the fitness of each {@link DNA} object in the population.
-     *
-     * @param originalDNA The original distribution of products to locations currently stored in the database.
-     *                    Used to find product movements & calculate distances travelled.
      */
-    public void calculateFitness(DNA originalDNA) {
+    public void calculateFitness() {
         for (DNA dna : population) {
-            dna.calculateFitness(originalDNA, distanceMatrix);
-            System.out.println("Calculated fitness: " + dna.getFitness());
+            // calculate fitness of each DNA object based on the initial DNA object
+            dna.calculateFitness(initialDNA, distanceMatrix);
+            log.info("Calculated fitness: {}", dna.getFitness());
         }
     }
 
@@ -147,6 +148,7 @@ public class Population {
      * object if no best {@link DNA} object could be found.
      */
     public DNA findFittestDNA() {
+
         return this.population.stream()
                 .max(Comparator.comparingDouble(DNA::getFitness))
                 .orElse(new DNA());
@@ -187,6 +189,7 @@ public class Population {
             // add the newly created DNA object the "new" population
             population.set(i, child);
         }
+        // increase the counter that keeps track of the number of generations that have already been created.
         generations++;
     }
 }

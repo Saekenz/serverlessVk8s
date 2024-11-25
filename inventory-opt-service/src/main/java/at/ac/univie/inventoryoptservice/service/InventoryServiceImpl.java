@@ -17,7 +17,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Map;
 
 @Service
 @Slf4j
@@ -46,47 +45,40 @@ public class InventoryServiceImpl implements IInventoryService {
         OptimizationConfig config = parseOptimizationMessage(message);
 
         // 1a) fetch data needed for optimization
+        long startTime = System.nanoTime();
         List<Chromosome> initialChromosomes = fetchInventoryData();
         DNA initalDNA = new DNA(initialChromosomes);
-        System.out.println(initalDNA);
 
         // 1b) create a population (permutations of input data)
         Population population = new Population(initalDNA, config.getMutationRate());
         population.initializePopulation(config.getPopulationSize());
-        population.printPopulation();
+        log.debug("Initial population size: {}", population.getPopulation().size());
 
+        // 2) selection
+        while(population.getGenerations() < config.getGenerations()) {
+            // 2a) evaluate fitness of each element in the population
+            population.calculateFitness();
 
-        // TEST Distance Matrix creation
-//        System.out.println(population.getUniqueLocations());
-//        Map<LocationPair, Double> distanceMatrix = population.getDistanceMatrix();
-//        for (Map.Entry<LocationPair, Double> entry : distanceMatrix.entrySet()) {
-//            System.out.println(entry.getKey() + " " + entry.getValue());
-//        }
+            // 2b) create a pool for roulette wheel selection (adding fitter elements more often)
+            population.generateCrossoverPool();
 
+            // 3) create a new population and replace the old one with it
+            population.generateNextGeneration();
+            log.info("New generation population size: {}", population.getPopulation().size());
+        }
 
-        // 2a) evaluate fitness of each element in the population - LOOP
-        population.calculateFitness(initalDNA);
-
-        // 2b) create a pool for roulette wheel selection (adding fitter elements more often)
-        population.generateCrossoverPool();
-
-        // 3a) pick 2 elements from the pool - LOOP
-        // 3b) crossover the 2 parent elements to create a new element
-        // 3c) mutate the new element based on the mutation probability
-        // 3d) add the new element to a new population and repeat the process from 3a)
-        population.generateNextGeneration();
-
-        // 4) replace the old population with the new one and repeat the process from step 2a)
-
-        // 5) pick the fittest element of the final generation
+        // 4) pick the best element of the final generation
+        population.calculateFitness();
         DNA bestDNA = population.findFittestDNA();
+        log.info("Best DNA fitness of last generation: {}", bestDNA.getFitness());
+        long endTime = System.nanoTime();
+        logElapsedTime(startTime, endTime);
 
         // 6) create stock optimization messages
         List<String> stockOptimizationMessages = createStockOptimizationMessagesFromDNA(bestDNA);
 
         // 7) send the messages to the optimization topic
-//        sendStockOptimizationMessages(stockOptimizationMessages);
-//        sendOptMessagesTest();
+        sendStockOptimizationMessages(stockOptimizationMessages);
     }
 
     private OptimizationConfig parseOptimizationMessage(String message) {
@@ -142,9 +134,9 @@ public class InventoryServiceImpl implements IInventoryService {
             for (String stockOptimizationMessage : stockOptimizationMessages) {
                 counter++;
                 messagingGateway.sendToPubSub(stockOptimizationMessage, pubSubConfiguration.getTopic());
-                log.info("Sent stock optimization message {}: {}", counter, stockOptimizationMessage);
+                log.debug("Sent stock optimization message {}: {}", counter, stockOptimizationMessage);
             }
-            log.info("Stock optimization message sent: {}", counter);
+            log.debug("Stock optimization messages sent: {}", counter);
         }
     }
 
@@ -161,6 +153,11 @@ public class InventoryServiceImpl implements IInventoryService {
             log.error(e.getMessage());
             return ResponseEntity.internalServerError().body(e.getMessage());
         }
+    }
+
+    private void logElapsedTime(long startTime, long endTime) {
+        double elapsedTimeInSeconds = (endTime - startTime) / 1_000_000_000.0;
+        log.info("Execution time: {} seconds", elapsedTimeInSeconds);
     }
 
     private void sendOptMessagesTest() {
