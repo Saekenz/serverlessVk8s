@@ -49,4 +49,12 @@ public class DistanceCalculator {
         }
         return distanceMatrix;
     }
+
+    public double calculateMaxPossibleDistance(Map<LocationPair, Double> distanceMatrix) {
+        double maxDistance = 0;
+        for (LocationPair entry : distanceMatrix.keySet()) {
+            maxDistance += distanceMatrix.get(entry);
+        }
+        return maxDistance;
+    }
 }

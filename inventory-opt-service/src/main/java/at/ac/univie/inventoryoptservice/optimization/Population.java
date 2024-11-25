@@ -19,9 +19,11 @@ public class Population {
 
     private Map<Long, Integer> productsInStock;
     private Map<Long, Integer> locationsPerProduct;
-
     private List<SimpleLocation> uniqueLocations;
+
+    private DistanceCalculator distanceCalculator;
     private Map<LocationPair, Double> distanceMatrix;
+    private double maxPossibleTransferDistance;
 
     private Random rand;
 
@@ -34,19 +36,25 @@ public class Population {
         this.productsInStock = new HashMap<>();
         this.locationsPerProduct = new HashMap<>();
         this.uniqueLocations = new ArrayList<>();
+        this.distanceCalculator = new DistanceCalculator();
         this.distanceMatrix = new HashMap<>();
+        this.maxPossibleTransferDistance = 0.0;
         this.rand = new Random();
     }
 
     public void initializePopulation(int populationSize) {
         setProductsAndLocations(initialDNA);
         calculateDistanceMatrix();
+        setMaxPossibleTransferDistance();
         generatePermutations(initialDNA, populationSize);
     }
 
     private void calculateDistanceMatrix() {
-        DistanceCalculator distanceCalculator = new DistanceCalculator();
         this.distanceMatrix = distanceCalculator.calculateDistanceMatrix(uniqueLocations);
+    }
+
+    private void setMaxPossibleTransferDistance() {
+        this.maxPossibleTransferDistance = distanceCalculator.calculateMaxPossibleDistance(distanceMatrix);
     }
 
     private void setProductsAndLocations(DNA dna) {
@@ -126,18 +134,8 @@ public class Population {
     public void calculateFitness() {
         for (DNA dna : population) {
             // calculate fitness of each DNA object based on the initial DNA object
-            dna.calculateFitness(initialDNA, distanceMatrix);
+            dna.calculateFitness(initialDNA, distanceMatrix, maxPossibleTransferDistance);
             log.info("Calculated fitness: {}", dna.getFitness());
-        }
-    }
-
-    public void printPopulation() {
-        System.out.println("==================================== Population =========================================");
-        for (DNA dna : population) {
-            System.out.println("=================== DNA ==================");
-            for (Chromosome c : dna.getChromosomes()) {
-                System.out.println(c.toString());
-            }
         }
     }
 
@@ -161,7 +159,6 @@ public class Population {
         crossoverPool.clear();
         double maxFitness = findFittestDNA().getFitness();
 
-        // TODO: check if fitness is guaranteed to be > 0 -> if not use linear interpolation
         for (DNA dna : population) {
             double normalizedFitness = dna.getFitness() / maxFitness;
             int n = (int) Math.floor(normalizedFitness * 100);
@@ -177,7 +174,10 @@ public class Population {
      *
      */
     public void generateNextGeneration() {
-        for (int i = 0; i < population.size(); i++) {
+        // apply elitism (carry over the best element of the last generation)
+        population.set(0, findFittestDNA());
+
+        for (int i = 1; i < population.size(); i++) {
             // pick 2 random objects from the crossover pool
             DNA parent1 = crossoverPool.get(rand.nextInt(crossoverPool.size()));
             DNA parent2 = crossoverPool.get(rand.nextInt(crossoverPool.size()));

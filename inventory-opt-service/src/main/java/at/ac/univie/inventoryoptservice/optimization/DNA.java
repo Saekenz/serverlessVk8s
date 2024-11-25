@@ -120,13 +120,20 @@ public class DNA {
         return foundChromosomes.get(RANDOM.nextInt(foundChromosomes.size()));
     }
 
-    public void calculateFitness(DNA originalDNA, Map<LocationPair, Double> distanceMatrix) {
-        // TODO: IMPLEMENT
-        // calculate fitness of this allocation based on the initial distribution
-        // factor in capacity utilization & distance that products need to travel
-        fitness = calculateDemandCoverage();
-        log.debug("Fitness (demand coverage): {}", fitness);
-        calculateDistanceMoved(originalDNA, distanceMatrix);
+    public void calculateFitness(DNA originalDNA, Map<LocationPair, Double> distanceMatrix,
+                                 double maxPossibleTransferDistance) {
+
+        // calculate how well demand is covered for each product/location pair
+        double fitnessDemand = calculateDemandCoverage();
+
+        // calculate how well distance for product transfers between locations is minimized
+        double transferDistance = calculateDistanceMoved(originalDNA, distanceMatrix);
+        double fitnessDistance = calculateDistanceFitness(transferDistance, maxPossibleTransferDistance);
+
+        // combine demand coverage and transfer distance into final fitness score
+        fitness = (fitnessDemand + fitnessDistance) / 2;
+
+        log.debug("Fitness: {}", fitness);
     }
 
     private double calculateDemandCoverage() {
@@ -155,6 +162,7 @@ public class DNA {
     private double calculateDistanceMoved(DNA originalDNA, Map<LocationPair, Double> distanceMatrix) {
         double totalDistance = 0.0;
         int productTransferCount = 0;
+        Set<LocationPair> visitedTransfers = new HashSet<>();
 
         // create collections to keep track of stock changes for each product at each location
         Map<Long, List<StockChange>> surplusMap = new HashMap<>();
@@ -206,13 +214,14 @@ public class DNA {
                     }
 
                     int transferQty = Math.min(stockSurplus.quantity, stockDeficit.quantity);
-                    double transferDistance = distanceMatrix.get(new LocationPair(stockSurplus.getLocationId(),
-                            stockDeficit.getLocationId()));
-//                    log.info("{} of product with ID {} was transferred from Location {} to Location {} " +
-//                            "over a distance of {} km!", transferQty, productId, stockDeficit.getLocationId(),
-//                            stockSurplus.getLocationId(), transferDistance);
+                    LocationPair pair = new LocationPair(stockSurplus.getLocationId(), stockDeficit.getLocationId());
 
-                    totalDistance += transferDistance;
+                    // if there has been no transfer between these two locations, add it to the total distance
+                    if (!visitedTransfers.contains(pair)) {
+                        totalDistance += distanceMatrix.get(pair);
+                        visitedTransfers.add(pair);
+                    }
+
                     productTransferCount++;
 
                     stockSurplus.quantity -= transferQty;
@@ -223,5 +232,9 @@ public class DNA {
         log.debug("Total distance travelled to move products: {} km with {} transfers.", totalDistance,
                 productTransferCount);
         return totalDistance;
+    }
+
+    private double calculateDistanceFitness(double distance, double maxDistance) {
+        return 1.0 - (distance / maxDistance);
     }
 }
