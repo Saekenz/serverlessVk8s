@@ -1,6 +1,6 @@
 package at.ac.univie.inventoryoptservice.optimization;
 
-import at.ac.univie.inventoryoptservice.model.StockOptimizationDTO;
+import at.ac.univie.inventoryoptservice.dto.StockOptimizationDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

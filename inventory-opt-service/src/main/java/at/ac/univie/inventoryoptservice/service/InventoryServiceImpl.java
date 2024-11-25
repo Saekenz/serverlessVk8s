@@ -2,12 +2,13 @@ package at.ac.univie.inventoryoptservice.service;
 
 import at.ac.univie.inventoryoptservice.config.OptimizationConfig;
 import at.ac.univie.inventoryoptservice.config.OptimizationConfigFactory;
-import at.ac.univie.inventoryoptservice.model.InventoryAllocationDTO;
+import at.ac.univie.inventoryoptservice.dto.InventoryAllocationDTO;
 import at.ac.univie.inventoryoptservice.config.PubSubConfiguration;
-import at.ac.univie.inventoryoptservice.model.StockOptimizationDTO;
+import at.ac.univie.inventoryoptservice.dto.StockOptimizationDTO;
 import at.ac.univie.inventoryoptservice.optimization.*;
 import at.ac.univie.inventoryoptservice.outbound.OutboundConfiguration;
 import at.ac.univie.inventoryoptservice.repository.InventoryRepository;
+import at.ac.univie.inventoryoptservice.util.OptimizationMessageBuilder;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -23,15 +24,13 @@ import java.util.List;
 @RequiredArgsConstructor
 public class InventoryServiceImpl implements IInventoryService {
     private final OutboundConfiguration.PubSubOutboundGateway messagingGateway;
+    private final OptimizationMessageBuilder optimizationMessageBuilder;
 
     @Autowired
     private InventoryRepository inventoryRepository;
 
     @Autowired
     private PubSubConfiguration pubSubConfiguration;
-
-    @Autowired
-    private ObjectMapper objectMapper;
 
     @Override
     public ResponseEntity<?> fetchInventoryAllocation() {
@@ -75,12 +74,20 @@ public class InventoryServiceImpl implements IInventoryService {
         logElapsedTime(startTime, endTime);
 
         // 6) create stock optimization messages
-        List<String> stockOptimizationMessages = createStockOptimizationMessagesFromDNA(bestDNA);
+        List<String> stockOptimizationMessages = optimizationMessageBuilder
+                .createStockOptimizationMessagesFromDNA(bestDNA);
 
         // 7) send the messages to the optimization topic
         sendStockOptimizationMessages(stockOptimizationMessages);
     }
 
+    /**
+     * Parses a message that adheres to the schema of {@link OptimizationConfig}.
+     *
+     * @param message The message that is to be parsed.
+     * @return A {@link OptimizationConfig} object containing the information found in the message. Returns a
+     * {@link OptimizationConfig} object with default values if an error occurs during parsing.
+     */
     private OptimizationConfig parseOptimizationMessage(String message) {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
@@ -93,41 +100,24 @@ public class InventoryServiceImpl implements IInventoryService {
         }
     }
 
+    /**
+     * Fetches data from database tables {@code inventory} and {@code location} from the database and converts it into
+     * a {@link List} of {@link Chromosome} objects for use in the genetic algorithm.
+     *
+     * @return {@link List} of {@link Chromosome} objects based on data found in the database.
+     */
     private List<Chromosome> fetchInventoryData() {
         return inventoryRepository.fetchInventoryWithLocation().stream()
                 .map(InventoryAllocationDTO::toChromosome)
                 .toList();
     }
 
-    private List<StockOptimizationDTO> createStockOptimizationFromDNA(DNA dna) {
-        return dna.getChromosomes().stream()
-                .map(Chromosome::toStockOptimizationDTO)
-                .toList();
-    }
-
-    private List<String> createStockOptimizationMessagesFromDNA(DNA bestDNA) {
-        // convert each Chromosome in DNA to StockOptimizationDTO
-        List<StockOptimizationDTO> stockOptimizations = createStockOptimizationFromDNA(bestDNA);
-
-        // build optimization messages based on list of StockOptimizationDTO
-        return buildStockOptimizationMessages(stockOptimizations);
-    }
-
-    private List<String> buildStockOptimizationMessages (List<StockOptimizationDTO> stockOptimizationDTOs) {
-        return stockOptimizationDTOs.stream()
-                .map(this::buildStockOptimizationMessage)
-                .toList();
-    }
-
-    private String buildStockOptimizationMessage (StockOptimizationDTO stockOptimizationDTO) {
-        try {
-            return objectMapper.writeValueAsString(stockOptimizationDTO);
-        } catch (JsonProcessingException e) {
-            log.error("Error while parsing stock optimization: {}", e.getMessage());
-            return "";
-        }
-    }
-
+    /**
+     * Sends stock optimization messages to a PubSub topic via a messaging gateway.
+     *
+     * @param stockOptimizationMessages A {@link List} of {@link String} objects representing stock optimization
+     *                                  messages.
+     */
     private void sendStockOptimizationMessages(List<String> stockOptimizationMessages) {
         if (!stockOptimizationMessages.contains("")) {
             int counter = 0;
@@ -139,7 +129,6 @@ public class InventoryServiceImpl implements IInventoryService {
             log.debug("Stock optimization messages sent: {}", counter);
         }
     }
-
 
     @Override
     public ResponseEntity<?> pubsubTest() {

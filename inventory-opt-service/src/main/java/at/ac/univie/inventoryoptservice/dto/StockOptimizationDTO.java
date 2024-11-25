@@ -1,4 +1,4 @@
-package at.ac.univie.inventoryoptservice.model;
+package at.ac.univie.inventoryoptservice.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

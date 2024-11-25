@@ -1,4 +1,4 @@
-package at.ac.univie.inventoryoptservice.model;
+package at.ac.univie.inventoryoptservice.dto;
 
 import at.ac.univie.inventoryoptservice.optimization.Chromosome;
 import lombok.AllArgsConstructor;
