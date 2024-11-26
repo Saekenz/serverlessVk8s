@@ -1,10 +1,7 @@
 package at.ac.univie.inventorymgmtservice.service;
 
 import at.ac.univie.inventorymgmtservice.config.PubSubConfiguration;
-import at.ac.univie.inventorymgmtservice.model.Inventory;
-import at.ac.univie.inventorymgmtservice.model.InventoryCurrentStockUpdateDTO;
-import at.ac.univie.inventorymgmtservice.model.InventoryTargetStockUpdateDTO;
-import at.ac.univie.inventorymgmtservice.model.StockAlertDTO;
+import at.ac.univie.inventorymgmtservice.model.*;
 import at.ac.univie.inventorymgmtservice.outbound.OutboundConfiguration;
 import at.ac.univie.inventorymgmtservice.repository.InventoryRepository;
 import at.ac.univie.inventorymgmtservice.repository.LocationRepository;
@@ -138,6 +135,16 @@ public class InventoryServiceImpl implements IInventoryService {
             messagingGateway.sendToPubSub(stockAlertJson, pubSubConfiguration.getAlertTopic());
         } catch (Exception e) {
             log.error("Error while creating stock alert: {}", e.getMessage());
+        }
+    }
+
+    private void createAndSendOptMsg() {
+        try {
+            OptimizationMessageDTO optMsg = new OptimizationMessageDTO();
+            String optMsgJson = objectMapper.writeValueAsString(optMsg);
+            messagingGateway.sendToPubSub(optMsgJson, pubSubConfiguration.getOptimizeTopic());
+        } catch (JsonProcessingException e) {
+            log.error("Error while creating optimization message: {}", e.getMessage());
         }
     }
 }
