@@ -113,6 +113,12 @@ public class InventoryServiceImpl implements IInventoryService {
         }
     }
 
+    @Override
+    public void handleOutgoingOptimizationMessage() {
+        log.info("Sending optimization message");
+        createAndSendOptMsg();
+    }
+
     private void logUpdatedRows(int rowsUpdated) {
         log.info("Rows updated: {}", rowsUpdated);
     }
@@ -138,7 +144,7 @@ public class InventoryServiceImpl implements IInventoryService {
         }
     }
 
-    private void createAndSendOptMsg() {
+    public void createAndSendOptMsg() {
         try {
             OptimizationMessageDTO optMsg = new OptimizationMessageDTO();
             String optMsgJson = objectMapper.writeValueAsString(optMsg);

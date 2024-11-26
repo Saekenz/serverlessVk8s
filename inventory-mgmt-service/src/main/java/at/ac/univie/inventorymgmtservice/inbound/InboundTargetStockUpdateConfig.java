@@ -11,18 +11,28 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.integration.annotation.ServiceActivator;
 import org.springframework.integration.channel.PublishSubscribeChannel;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.handler.annotation.Header;
+import org.springframework.scheduling.annotation.Scheduled;
+
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Configuration
 @Slf4j
 @RequiredArgsConstructor
 public class InboundTargetStockUpdateConfig {
     private final PubSubConfiguration pubSubConfiguration;
+    private final AtomicInteger messageCounter = new AtomicInteger(0);
+
+    private static final int FIXED_RATE = 5000;
+
+    @Value("${inv.mgmt.message.threshold}")
+    private int messageThreshold;
 
     @Autowired
     private IInventoryService inventoryService;
@@ -50,6 +60,16 @@ public class InboundTargetStockUpdateConfig {
             @Header(GcpPubSubHeaders.ORIGINAL_MESSAGE) BasicAcknowledgeablePubsubMessage message) {
         log.info("Message arrived! Payload: {}", payload);
         inventoryService.handleIncomingTargetStockUpdateMessage(payload);
+        messageCounter.incrementAndGet();
         message.ack();
+    }
+
+    @Scheduled(fixedRate = FIXED_RATE)
+    public void checkReceivedMessageVolume() {
+        if (messageCounter.get() > messageThreshold) {
+            inventoryService.handleOutgoingOptimizationMessage();
+        }
+        log.info("{} messages arrived in the last {} s!", messageCounter.get(), FIXED_RATE/1000);
+        messageCounter.set(0);
     }
 }
