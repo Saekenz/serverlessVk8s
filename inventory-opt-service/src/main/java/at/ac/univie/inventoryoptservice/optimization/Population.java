@@ -117,7 +117,8 @@ public class Population {
                 stockLeft.put(c.getProductId(), 0);
             } else {
                 // pick a random number from the total stock that is left for this product
-                int newCurrentStock = rand.nextInt(stockLeft.get(c.getProductId()) + 1);
+                int stockLeftForProduct = stockLeft.get(c.getProductId());
+                int newCurrentStock = rand.nextInt((int) (stockLeftForProduct * 0.2), stockLeftForProduct + 1);
                 newChromosome.setCurrentStock(newCurrentStock);
                 stockLeft.put(c.getProductId(), stockLeft.get(c.getProductId()) - newCurrentStock);
             }

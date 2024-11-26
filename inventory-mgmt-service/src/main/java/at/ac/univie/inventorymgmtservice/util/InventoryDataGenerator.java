@@ -14,10 +14,9 @@ import java.util.Random;
 @Setter
 @AllArgsConstructor
 public class InventoryDataGenerator {
-    private static final int MIN_CURRENT_STOCK = 1;
-    private static final int MAX_CURRENT_STOCK = 300;
-    private static final int MIN_TARGET_STOCK = 10;
+    private static final int MIN_TARGET_STOCK = 100;
     private static final int MAX_TARGET_STOCK = 500;
+    private static final double MIN_CURRENT_STOCK_PERCENT = 0.65;
 
     private final Random random;
 
@@ -37,8 +36,13 @@ public class InventoryDataGenerator {
                 inventory.setLocation(location);
 
                 inventory.setProductId(productId);
-                inventory.setCurrentStock(random.nextInt(MIN_CURRENT_STOCK, MAX_CURRENT_STOCK + 1));
-                inventory.setTargetStock(random.nextInt(MIN_TARGET_STOCK, MAX_TARGET_STOCK + 1));
+
+                // set target & current stock for the inventory (current stock is always at least 65% of target stock)
+                int targetStock = random.nextInt(MIN_TARGET_STOCK, MAX_TARGET_STOCK + 1);
+                int currentStock = random.nextInt((int) (targetStock * MIN_CURRENT_STOCK_PERCENT), targetStock + 1);
+
+                inventory.setCurrentStock(currentStock);
+                inventory.setTargetStock(targetStock);
 
                 inventories.add(inventory);
             }
