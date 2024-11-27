@@ -7,6 +7,4 @@ public interface IInventoryService {
     ResponseEntity<?> fetchInventoryAllocation();
 
     void handleIncomingOptimizationMessage(String message);
-
-    ResponseEntity<?> pubsubTest();
 }

@@ -4,7 +4,6 @@ import at.ac.univie.inventoryoptservice.config.OptimizationConfig;
 import at.ac.univie.inventoryoptservice.config.OptimizationConfigFactory;
 import at.ac.univie.inventoryoptservice.dto.InventoryAllocationDTO;
 import at.ac.univie.inventoryoptservice.config.PubSubConfiguration;
-import at.ac.univie.inventoryoptservice.dto.StockOptimizationDTO;
 import at.ac.univie.inventoryoptservice.optimization.*;
 import at.ac.univie.inventoryoptservice.outbound.OutboundConfiguration;
 import at.ac.univie.inventoryoptservice.repository.InventoryRepository;
@@ -43,44 +42,28 @@ public class InventoryServiceImpl implements IInventoryService {
         // retrieve optimization configuration from incoming message
         OptimizationConfig config = parseOptimizationMessage(message);
 
-        // 1a) fetch data needed for optimization
+        // start timer to measure genetic algorithm runtime
         long startTime = System.nanoTime();
+
+        // 1) fetch data needed for optimization
         List<Chromosome> initialChromosomes = fetchInventoryData();
         DNA initalDNA = new DNA(initialChromosomes);
 
-        // 1b) create a population (permutations of input data)
-        Population population = new Population(initalDNA, config.getMutationRate());
-        population.initializePopulation(config.getPopulationSize());
-        log.debug("Initial population size: {}", population.getPopulation().size());
+        // run the genetic algorithm to get an optimized allocation
+        DNA bestDNA = runGeneticAlgorithm(initalDNA, config);
 
-        // 2) selection
-        while(population.getGenerations() < config.getGenerations()) {
-            // 2a) evaluate fitness of each element in the population
-            population.calculateFitness();
-
-            // 2b) create a pool for roulette wheel selection (adding fitter elements more often)
-            population.generateCrossoverPool();
-
-            // 3) create a new population and replace the old one with it
-            population.generateNextGeneration();
-            log.debug("New generation population size: {}", population.getPopulation().size());
-        }
-
-        // 4) pick the best element of the final generation
-        population.calculateFitness();
-        DNA bestDNA = population.findFittestDNA();
-        log.info("Best DNA fitness of last generation: {}", bestDNA.getFitness());
+        // end timer and log the elapsed time
         long endTime = System.nanoTime();
         logElapsedTime(startTime, endTime);
 
-        // 6) create stock optimization messages
+        // 5) create stock optimization messages
         List<String> stockOptimizationMessages = optimizationMessageBuilder
                 .createStockOptimizationMessagesFromDNA(bestDNA);
 
-        // 7) send the messages to the optimization topic
+        // 6) send the messages to the optimization topic
         sendStockOptimizationMessages(stockOptimizationMessages);
 
-        // 8) create and state message that signals completion of optimization
+        // 7) create and send message that signals completion of optimization
         createAndSendOptimizationFinishedMessage();
     }
 
@@ -115,10 +98,37 @@ public class InventoryServiceImpl implements IInventoryService {
                 .toList();
     }
 
-    private void createAndSendOptimizationFinishedMessage() {
-        String messageContent = "";
-        messagingGateway.sendToPubSub(messageContent, pubSubConfiguration.getOptFinishedTopic());
-        log.info("Sent optimization finished message!");
+    /**
+     * Takes the current allocation of products to locations in form a {@link DNA} object and runs a genetic algorithm
+     * that tries to create an optimized version of it and return it.
+     *
+     * @param initialDNA The initial allocation of products to locations as found in the database.
+     * @param config The configuration used to run the genetic algorithm.
+     * @return An optimized version of the supplied {@link DNA} object.
+     */
+    private DNA runGeneticAlgorithm(DNA initialDNA, OptimizationConfig config) {
+        Population population = new Population(initialDNA, config.getMutationRate());
+        population.initializePopulation(config.getPopulationSize());
+        log.debug("Initial population size: {}", population.getPopulation().size());
+
+        // 2) selection
+        while(population.getGenerations() < config.getGenerations()) {
+            // 2a) evaluate fitness of each element in the population
+            population.calculateFitness();
+
+            // 2b) create a pool for roulette wheel selection (adding fitter elements more often)
+            population.generateCrossoverPool();
+
+            // 3) create a new population and replace the old one with it
+            population.generateNextGeneration();
+            log.debug("New generation population size: {}", population.getPopulation().size());
+        }
+
+        // 4) pick the best element of the final generation
+        population.calculateFitness();
+        DNA bestDNA = population.findFittestDNA();
+        log.info("Best DNA fitness of last generation: {}", bestDNA.getFitness());
+        return bestDNA;
     }
 
     /**
@@ -139,44 +149,26 @@ public class InventoryServiceImpl implements IInventoryService {
         }
     }
 
-    @Override
-    public ResponseEntity<?> pubsubTest() {
-        try {
-            StockOptimizationDTO stockOptimizationDTO = new StockOptimizationDTO(1L, 3L, 33);
-            String stockUpdateJson = new ObjectMapper().writeValueAsString(stockOptimizationDTO);
-
-            messagingGateway.sendToPubSub(stockUpdateJson, pubSubConfiguration.getStockUpdateTopic());
-            return ResponseEntity.ok().body(stockUpdateJson);
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            return ResponseEntity.internalServerError().body(e.getMessage());
-        }
+    /**
+     * Creates a message with an empty body that is sent to the {@code inv-opt-finished} PubSub topic.
+     *
+     */
+    private void createAndSendOptimizationFinishedMessage() {
+        String messageContent = "";
+        messagingGateway.sendToPubSub(messageContent, pubSubConfiguration.getOptFinishedTopic());
+        log.info("Sent optimization finished message!");
     }
 
+    /**
+     * Calculates the elapsed time in seconds between two points in time.
+     * This method takes two {@code long} numbers representing the start and end times in nanoseconds
+     * and calculates the time in seconds between them.
+     *
+     * @param startTime The starting point in nanoseconds.
+     * @param endTime The ending point in nanoseconds.
+     */
     private void logElapsedTime(long startTime, long endTime) {
         double elapsedTimeInSeconds = (endTime - startTime) / 1_000_000_000.0;
         log.info("Execution time: {} seconds", elapsedTimeInSeconds);
-    }
-
-    private void sendOptMessagesTest() {
-        String msg1 = "{"
-                + "\"productId\":105,"
-                + "\"locationId\":12,"
-                + "\"newCurrentStock\":77"
-                + "}";
-
-        String msg2 = "{"
-                + "\"productId\":103,"
-                + "\"locationId\":12,"
-                + "\"newCurrentStock\":14"
-                + "}";
-
-        String msg3 = "{"
-                + "\"productId\":107,"
-                + "\"locationId\":12,"
-                + "\"newCurrentStock\":23"
-                + "}";
-
-        sendStockOptimizationMessages(List.of(msg1, msg2, msg3));
     }
 }

@@ -24,9 +24,4 @@ public class InventoryOptController {
     public ResponseEntity<?> testGetInventoryAllocation() {
         return inventoryService.fetchInventoryAllocation();
     }
-
-    @GetMapping("/testpubsub")
-    public ResponseEntity<?> testPubSub() {
-        return inventoryService.pubsubTest();
-    }
 }

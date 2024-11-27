@@ -49,10 +49,10 @@ public class InboundConfiguration {
             String payload, @Header(GcpPubSubHeaders.ORIGINAL_MESSAGE) BasicAcknowledgeablePubsubMessage message) {
         log.info("Message arrived! Payload: {}", payload);
 
+        // Acknowledge the message to avoid PubSub re-sending it
+        message.ack();
+
         // Process the incoming message
         inventoryService.handleIncomingOptimizationMessage(payload);
-
-        // Acknowledge the message after processing
-        message.ack();
     }
 }
