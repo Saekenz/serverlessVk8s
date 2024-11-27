@@ -63,7 +63,7 @@ public class InventoryServiceImpl implements IInventoryService {
 
             // 3) create a new population and replace the old one with it
             population.generateNextGeneration();
-            log.info("New generation population size: {}", population.getPopulation().size());
+            log.debug("New generation population size: {}", population.getPopulation().size());
         }
 
         // 4) pick the best element of the final generation
@@ -79,6 +79,9 @@ public class InventoryServiceImpl implements IInventoryService {
 
         // 7) send the messages to the optimization topic
         sendStockOptimizationMessages(stockOptimizationMessages);
+
+        // 8) create and state message that signals completion of optimization
+        createAndSendOptimizationFinishedMessage();
     }
 
     /**
@@ -112,6 +115,12 @@ public class InventoryServiceImpl implements IInventoryService {
                 .toList();
     }
 
+    private void createAndSendOptimizationFinishedMessage() {
+        String messageContent = "";
+        messagingGateway.sendToPubSub(messageContent, pubSubConfiguration.getOptFinishedTopic());
+        log.info("Sent optimization finished message!");
+    }
+
     /**
      * Sends stock optimization messages to a PubSub topic via a messaging gateway.
      *
@@ -123,7 +132,7 @@ public class InventoryServiceImpl implements IInventoryService {
             int counter = 0;
             for (String stockOptimizationMessage : stockOptimizationMessages) {
                 counter++;
-                messagingGateway.sendToPubSub(stockOptimizationMessage, pubSubConfiguration.getTopic());
+                messagingGateway.sendToPubSub(stockOptimizationMessage, pubSubConfiguration.getStockUpdateTopic());
                 log.debug("Sent stock optimization message {}: {}", counter, stockOptimizationMessage);
             }
             log.debug("Stock optimization messages sent: {}", counter);
@@ -136,7 +145,7 @@ public class InventoryServiceImpl implements IInventoryService {
             StockOptimizationDTO stockOptimizationDTO = new StockOptimizationDTO(1L, 3L, 33);
             String stockUpdateJson = new ObjectMapper().writeValueAsString(stockOptimizationDTO);
 
-            messagingGateway.sendToPubSub(stockUpdateJson, pubSubConfiguration.getTopic());
+            messagingGateway.sendToPubSub(stockUpdateJson, pubSubConfiguration.getStockUpdateTopic());
             return ResponseEntity.ok().body(stockUpdateJson);
         } catch (Exception e) {
             log.error(e.getMessage());

@@ -136,7 +136,7 @@ public class Population {
         for (DNA dna : population) {
             // calculate fitness of each DNA object based on the initial DNA object
             dna.calculateFitness(initialDNA, distanceMatrix, maxPossibleTransferDistance);
-            log.info("Calculated fitness: {}", dna.getFitness());
+            log.debug("Calculated fitness: {}", dna.getFitness());
         }
     }
 
