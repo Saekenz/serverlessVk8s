@@ -7,6 +7,7 @@ import at.ac.univie.inventorymgmtservice.repository.InventoryRepository;
 import at.ac.univie.inventorymgmtservice.repository.LocationRepository;
 import at.ac.univie.inventorymgmtservice.repository.ProductRepository;
 import at.ac.univie.inventorymgmtservice.util.InventoryDataGenerator;
+import at.ac.univie.inventorymgmtservice.util.MessageProcessingControl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 @Service
 @Slf4j
@@ -26,6 +29,8 @@ public class InventoryServiceImpl implements IInventoryService {
     private static final double STOCK_LOW_THRESHOLD = 0.3;
 
     private final OutboundConfiguration.PubSubOutboundGateway messagingGateway;
+
+    private final BlockingQueue<String> messageQueue = new LinkedBlockingQueue<>();
 
     @Autowired
     private InventoryRepository inventoryRepository;
@@ -42,9 +47,32 @@ public class InventoryServiceImpl implements IInventoryService {
     @Autowired
     private PubSubConfiguration pubSubConfiguration;
 
+    @Autowired
+    private MessageProcessingControl processingControl;
+
 
     @Override
     public void handleIncomingTargetStockUpdateMessage(String message) {
+        if (processingControl.isProcessingEnabled()) {
+            processTargetStockUpdateMessage(message);
+        }
+        else {
+            // if processing is currently paused add message to queue
+            messageQueue.offer(message);
+            log.info("Processing messages paused. Messages currently queued: {}", messageQueue.size());
+        }
+    }
+
+    private void processQueuedMessages() {
+        int messagesQueued = messageQueue.size();
+        while (!messageQueue.isEmpty()) {
+            String message = messageQueue.poll();
+            processTargetStockUpdateMessage(message);
+        }
+        log.info("Queued messages processed: {}", messagesQueued);
+    }
+
+    private void processTargetStockUpdateMessage(String message) {
         try {
             InventoryTargetStockUpdateDTO recvInv = objectMapper.readValue(message,
                     InventoryTargetStockUpdateDTO.class);
@@ -115,12 +143,25 @@ public class InventoryServiceImpl implements IInventoryService {
 
     @Override
     public void handleOutgoingOptimizationMessage() {
-        log.info("Sending optimization message");
-        createAndSendOptMsg();
+        // Trigger an inventory optimization only if one isn't currently running
+        if (processingControl.isProcessingEnabled()) {
+            log.info("Sending optimization message");
+            createAndSendOptMsg();
+            processingControl.pauseProcessing();
+            log.info("Processing of messages paused.");
+        }
+    }
+
+    @Override
+    public void handleIncomingOptFinishedMessage() {
+        log.info("Received optimization finished message");
+        processQueuedMessages();
+        processingControl.resumeProcessing();
+        log.info("Processing of messages resumed.");
     }
 
     private void logUpdatedRows(int rowsUpdated) {
-        log.info("Rows updated: {}", rowsUpdated);
+        log.debug("Rows updated: {}", rowsUpdated);
     }
 
     private void updateTargetStock(InventoryTargetStockUpdateDTO inv) {

@@ -14,4 +14,5 @@ public class PubSubConfiguration {
     private String optimizeTopic;
     private String targetStockSub;
     private String currentStockSub;
+    private String optFinishedSub;
 }

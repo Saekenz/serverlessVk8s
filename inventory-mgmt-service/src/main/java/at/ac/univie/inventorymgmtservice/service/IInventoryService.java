@@ -11,4 +11,6 @@ public interface IInventoryService {
     ResponseEntity<?> generateInventoryData();
 
     void handleOutgoingOptimizationMessage();
+
+    void handleIncomingOptFinishedMessage();
 }

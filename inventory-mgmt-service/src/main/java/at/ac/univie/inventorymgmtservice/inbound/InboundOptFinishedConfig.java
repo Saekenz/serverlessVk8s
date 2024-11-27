@@ -11,65 +11,45 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.integration.annotation.ServiceActivator;
 import org.springframework.integration.channel.PublishSubscribeChannel;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.handler.annotation.Header;
-import org.springframework.scheduling.annotation.Scheduled;
-
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Configuration
 @Slf4j
 @RequiredArgsConstructor
-public class InboundTargetStockUpdateConfig {
+public class InboundOptFinishedConfig {
     private final PubSubConfiguration pubSubConfiguration;
-    private final AtomicInteger messageCounter = new AtomicInteger(0);
-
-    private static final int FIXED_RATE = 5000;
-
-    @Value("${inv.mgmt.message.threshold}")
-    private int messageThreshold;
 
     @Autowired
     private IInventoryService inventoryService;
 
     @Bean
-    public MessageChannel targetStockUpdateInputChannel() {
+    public MessageChannel optFinishedInputChannel() {
         return new PublishSubscribeChannel();
     }
 
     @Bean
-    public PubSubInboundChannelAdapter targetStockUpdateAdapter(
-            @Qualifier("targetStockUpdateInputChannel") MessageChannel inboundChannel,
+    public PubSubInboundChannelAdapter optFinishedAdapter(
+            @Qualifier("optFinishedInputChannel") MessageChannel inboundChannel,
             PubSubTemplate pubSubTemplate) {
         PubSubInboundChannelAdapter inboundAdapter = new PubSubInboundChannelAdapter(pubSubTemplate,
-                pubSubConfiguration.getTargetStockSub());
+                pubSubConfiguration.getOptFinishedSub());
         inboundAdapter.setOutputChannel(inboundChannel);
         inboundAdapter.setAckMode(AckMode.MANUAL);
         inboundAdapter.setPayloadType(String.class);
         return inboundAdapter;
     }
 
-    @ServiceActivator(inputChannel = "targetStockUpdateInputChannel")
+    @ServiceActivator(inputChannel = "optFinishedInputChannel")
     public void messageReceiver(
             String payload,
             @Header(GcpPubSubHeaders.ORIGINAL_MESSAGE) BasicAcknowledgeablePubsubMessage message) {
-        log.debug("Message arrived! Payload: {}", payload);
-        inventoryService.handleIncomingTargetStockUpdateMessage(payload);
-        messageCounter.incrementAndGet();
+        log.info("Message arrived! Payload: {}", payload);
+        inventoryService.handleIncomingOptFinishedMessage();
         message.ack();
-    }
-
-    @Scheduled(fixedRate = FIXED_RATE)
-    public void checkReceivedMessageVolume() {
-        if (messageCounter.get() > messageThreshold) {
-            inventoryService.handleOutgoingOptimizationMessage();
-        }
-        log.info("{} messages arrived in the last {} s!", messageCounter.get(), FIXED_RATE/1000);
-        messageCounter.set(0);
     }
 }

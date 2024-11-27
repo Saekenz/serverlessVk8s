@@ -47,7 +47,7 @@ public class InboundCurrentStockUpdateConfig {
     @ServiceActivator(inputChannel = "currentStockUpdateInputChannel")
     public void messageReceiver(
             String payload, @Header (GcpPubSubHeaders.ORIGINAL_MESSAGE) BasicAcknowledgeablePubsubMessage message) {
-        log.info("Message arrived! Payload: {}", payload);
+        log.debug("Message arrived! Payload: {}", payload);
         inventoryService.handleIncomingCurrentStockUpdateMessage(payload);
         message.ack();
     }
