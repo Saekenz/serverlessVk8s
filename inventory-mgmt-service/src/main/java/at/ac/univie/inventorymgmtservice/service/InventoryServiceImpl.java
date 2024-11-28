@@ -58,7 +58,11 @@ public class InventoryServiceImpl implements IInventoryService {
         }
         else {
             // if processing is currently paused add message to queue
-            messageQueue.offer(message);
+            boolean isOfferSuccess = messageQueue.offer(message);
+            if (!isOfferSuccess) {
+                log.warn("Failed adding incoming message to queue!");
+            }
+
             log.info("Processing messages paused. Messages currently queued: {}", messageQueue.size());
         }
     }
@@ -134,7 +138,7 @@ public class InventoryServiceImpl implements IInventoryService {
         int numInsertedInventories = inventoryRepository.saveAll(generatedInventories).size();
 
         if (numInsertedInventories == locationIds.size() * productIds.size()) {
-            return ResponseEntity.ok().build();
+            return new ResponseEntity<>("Successfully generated inventory data!", HttpStatus.CREATED);
         }
         else {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();

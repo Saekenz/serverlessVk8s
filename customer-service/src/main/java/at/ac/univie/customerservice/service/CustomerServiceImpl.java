@@ -65,6 +65,10 @@ public class CustomerServiceImpl implements ICustomerService {
     public ResponseEntity<?> update(Long id, CustomerDTO customerDTO) {
         Optional<Customer> customer = customerRepository.findById(id);
 
+        if (customerDTO.getUsername() == null || customerDTO.getEmail() == null) {
+            return ResponseEntity.badRequest().body("Username and email are required fields!");
+        }
+
         if (customer.isPresent()) {
             customer.get().setName(customerDTO.getName());
             customer.get().setUsername(customerDTO.getUsername());
@@ -78,7 +82,7 @@ public class CustomerServiceImpl implements ICustomerService {
             return ResponseEntity.status(HttpStatus.NO_CONTENT).headers(headers).build();
         }
         else {
-            return new ResponseEntity<>(String.format("Customer with id %s could not be found!", id),
+            return new ResponseEntity<>(String.format("Customer with id %s was not found!", id),
                     HttpStatus.NOT_FOUND);
         }
     }
@@ -97,7 +101,8 @@ public class CustomerServiceImpl implements ICustomerService {
         int numInsertedCustomers = customerRepository.saveAll(generatedCustomers).size();
 
         if (numInsertedCustomers == count) {
-            return ResponseEntity.ok().build();
+            return new ResponseEntity<>(String.format("Successfully created %s customers!", count),
+                    HttpStatus.CREATED);
         }
         else {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();

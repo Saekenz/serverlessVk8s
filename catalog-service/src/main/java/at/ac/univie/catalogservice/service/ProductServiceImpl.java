@@ -44,7 +44,7 @@ public class ProductServiceImpl implements IProductService {
             return ResponseEntity.ok(product.get().toDto());
         }
         else {
-            return new ResponseEntity<>(String.format("Product with id %s could not be found!", id),
+            return new ResponseEntity<>(String.format("Product with id %s was not found!", id),
                     HttpStatus.NOT_FOUND);
         }
     }
@@ -104,7 +104,8 @@ public class ProductServiceImpl implements IProductService {
         int numInsertedProducts = productRepository.saveAll(generatedProducts).size();
 
         if (numInsertedProducts == count) {
-            return ResponseEntity.ok().build();
+            return new ResponseEntity<>(String.format("Successfully created %s products!", count),
+                    HttpStatus.CREATED);
         }
         else {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();

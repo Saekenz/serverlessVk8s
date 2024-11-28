@@ -3,6 +3,7 @@ package at.ac.univie.alertservice.service;
 import at.ac.univie.alertservice.model.Alert;
 import at.ac.univie.alertservice.model.AlertDTO;
 import at.ac.univie.alertservice.repository.AlertRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
@@ -69,9 +70,9 @@ public class AlertServiceImpl implements IAlertService {
     public ResponseEntity<?> save(Alert alert) {
         try {
             AlertDTO dto = modelMapper.map(alertRepository.save(alert), AlertDTO.class);
-            String newCustomerLocation = env.getProperty("app.url") + dto.getId();
+            String createdAlertLocation = env.getProperty("app.url") + dto.getId();
 
-            return ResponseEntity.created(new URI(newCustomerLocation)).body(dto);
+            return ResponseEntity.created(new URI(createdAlertLocation)).body(dto);
         } catch (Exception e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -82,7 +83,7 @@ public class AlertServiceImpl implements IAlertService {
         try {
             Alert alert = objectMapper.readValue(alertMsg, Alert.class);
             alertRepository.save(alert);
-        } catch (Exception e) {
+        } catch (JsonProcessingException e) {
             log.error(e.getMessage());
         }
     }
@@ -96,7 +97,7 @@ public class AlertServiceImpl implements IAlertService {
             return ResponseEntity.noContent().build();
         }
         else {
-            return new ResponseEntity<>(String.format("Alert with id %s could not be found!", id),
+            return new ResponseEntity<>(String.format("Alert with id %s was not found!", id),
                     HttpStatus.NOT_FOUND);
         }
     }

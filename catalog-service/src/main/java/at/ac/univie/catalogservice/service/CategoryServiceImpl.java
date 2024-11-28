@@ -42,7 +42,7 @@ public class CategoryServiceImpl implements ICategoryService {
             return ResponseEntity.ok(modelMapper.map(category.get(), CategoryDTO.class));
         }
         else {
-            return new ResponseEntity<>(String.format("Category with id %s could not be found!", id),
+            return new ResponseEntity<>(String.format("Category with id %s was not found!", id),
                     HttpStatus.NOT_FOUND);
         }
     }
