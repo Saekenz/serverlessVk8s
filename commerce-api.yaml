@@ -1,0 +1,627 @@
+swagger: "2.0"
+info:
+  title: ecommerce
+  description: Ecommerce API for handling orders
+  version: 1.0.0
+host: ecommerce.apigateway.serverless-k8s-study.cloud.goog
+schemes:
+  - https
+tags:
+  - name: "Alerts"
+    description: "Operations related to alerts"
+  - name: "Catalog"
+    description: "Operations related to products and categories"
+  - name: "Customers"
+    description: "Operations related to customers"
+  - name: "Inventories"
+    description: "Operations related to inventories"
+  - name: "Orders"
+    description: "Operations related to orders"
+produces:
+  - application/json
+paths:
+  /alerts:
+    get:
+      tags:
+        - "Alerts"
+      summary: "Retrieve a list of alerts based on a date range"
+      operationId: "findAlertsByDateRange"
+      parameters:
+        - name: "from"
+          in: "query"
+          required: false
+          type: string
+          format: "date-time"
+        - name: "to"
+          in: "query"
+          required: false
+          type: string
+          format: "date-time"
+      responses:
+        "200":
+          description: "OK"
+          schema:
+            $ref: "#/definitions/Alert"
+    post:
+      tags:
+        - "Alerts"
+      summary: "Create a new alert"
+      description: "Creates a new alert and saves it to the database."
+      operationId: "createAlert"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "alert"
+          description: "Alert object that needs to be created"
+          required: true
+          schema:
+            $ref: "#/definitions/Alert"
+      responses:
+        "201":
+          description: "Alert successfully created"
+          schema:
+            $ref: "#/definitions/Alert"
+        "500":
+          description: "Internal server error"
+  /alerts/{id}:
+    get:
+      tags:
+        - "Alerts"
+      summary: "Retrieve an alert by Id"
+      description: "Retrieves an alert from the database by its Id."
+      operationId: "findAlertById"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: "Ok"
+          schema:
+            $ref: "#/definitions/Alert"
+        "404":
+          description: "Alert not found"
+          schema:
+            type: string
+    delete:
+      tags:
+        - "Alerts"
+      summary: "Delete an alert by Id"
+      description: "Removes an alert from the database by its Id."
+      operationId: "deleteAlert"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          type: integer
+          format: int64
+      responses:
+        "204":
+          description: "No content"
+        "404":
+          description: "Alert not found"
+          schema:
+            type: string
+  /products:
+    get:
+      tags:
+        - "Catalog"
+      summary: "Retrieve all products"
+      description: "Fetches a list of all products."
+      operationId: "findAllProducts"
+      responses:
+        "200":
+          description: "Ok"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/ProductDTO"
+        "500":
+          description: "Internal server error"
+    post:
+      tags:
+        - "Catalog"
+      summary: "Create a new product"
+      description: "Creates a new product and returns the created product along with its URI."
+      operationId: "createProduct"
+      consumes:
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "product"
+          description: "Product object that needs to be created"
+          required: true
+          schema:
+            $ref: "#/definitions/Product"
+      responses:
+        "201":
+          description: "Product successfully created"
+          headers:
+            Location:
+              type: "string"
+              description: "URI of the newly created product"
+          schema:
+            $ref: "#/definitions/ProductDTO"
+        "500":
+          description: "Internal server error"
+  /products/generate:
+    post:
+      tags:
+        - "Catalog"
+      summary: "Generate product data"
+      description: "Generates a number of products and saves them to the database."
+      operationId: "generateProductData"
+      produces:
+        - "text/plain"
+      parameters:
+        - name: "count"
+          in: "query"
+          required: true
+          type: integer
+      responses:
+        "201":
+          description: "Created"
+          schema:
+            type: string
+        "400":
+          description: "Bad request"
+        "500":
+          description: "Internal server error"
+  /products/{id}:
+    get:
+      tags:
+        - "Catalog"
+      summary: "Retrieve a product by ID"
+      description: "Fetches a specific product by its ID."
+      operationId: "findProductById"
+      parameters:
+        - name: "id"
+          in: "path"
+          description: "ID of the product to retrieve"
+          required: true
+          type: "integer"
+          format: "int64"
+      responses:
+        "200":
+          description: "Product successfully retrieved"
+          schema:
+            $ref: "#/definitions/ProductDTO"
+        "404":
+          description: "Product not found"
+          schema:
+            type: "string"
+  /categories:
+    get:
+      tags:
+        - "Catalog"
+      summary: "Retrieve all categories"
+      description: "Fetches a list of all categories."
+      operationId: "findAllCategories"
+      responses:
+        "200":
+          description: "List of categories successfully retrieved"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/CategoryDTO"
+        "500":
+          description: "Internal server error"
+  /categories/{id}:
+    get:
+      tags:
+        - "Catalog"
+      summary: "Retrieve a category by ID"
+      description: "Fetches a specific category by its ID."
+      operationId: "findCategoryById"
+      parameters:
+        - name: "id"
+          in: "path"
+          description: "ID of the category to retrieve"
+          required: true
+          type: "integer"
+          format: "int64"
+      responses:
+        "200":
+          description: "Category successfully retrieved"
+          schema:
+            $ref: "#/definitions/CategoryDTO"
+        "404":
+          description: "Category not found"
+          schema:
+            type: "string"
+  /customers:
+    get:
+      tags:
+        - "Customers"
+      summary: "Retrieve all customers"
+      description: "Fetches a list of all customers."
+      operationId: "findAllCustomers"
+      responses:
+        "200":
+          description: "List of customers successfully retrieved"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/CustomerDTO"
+        "500":
+          description: "Internal server error"
+    post:
+      tags:
+        - "Customers"
+      summary: "Create a new customer"
+      description: "Creates a new customer and returns the created customer along with its URI."
+      operationId: "createCustomer"
+      consumes:
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "customer"
+          description: "Customer object that needs to be created"
+          required: true
+          schema:
+            $ref: "#/definitions/Customer"
+      responses:
+        "201":
+          description: "Customer successfully created"
+          headers:
+            Location:
+              type: "string"
+              description: "URI of the newly created customer"
+          schema:
+            $ref: "#/definitions/CustomerDTO"
+        "500":
+          description: "Internal server error"
+  /customers/generate:
+    post:
+      tags:
+        - "Customers"
+      summary: "Generate customer data"
+      description: "Generates and inserts a specified number of random customers into the database."
+      operationId: "generateCustomerData"
+      parameters:
+        - name: "count"
+          in: "query"
+          description: "Number of customers to generate."
+          required: true
+          type: "integer"
+          minimum: 1
+      responses:
+        "201":
+          description: "Successfully created the specified number of customers"
+          schema:
+            type: "string"
+        "400":
+          description: "Invalid value for count parameter"
+          schema:
+            type: "string"
+        "500":
+          description: "Internal server error"
+  /customers/{id}:
+    get:
+      tags:
+        - "Customers"
+      summary: "Retrieve a customer by ID"
+      description: "Fetches a specific customer by its ID."
+      operationId: "findCustomerById"
+      parameters:
+        - name: "id"
+          in: "path"
+          description: "ID of the customer to retrieve"
+          required: true
+          type: "integer"
+          format: "int64"
+      responses:
+        "200":
+          description: "Customer successfully retrieved"
+          schema:
+            $ref: "#/definitions/CustomerDTO"
+        "404":
+          description: "Customer not found"
+          schema:
+            type: "string"
+  /inventory/generate:
+    post:
+      tags:
+        - "Inventories"
+      summary: "Generate inventory data"
+      description: "Generates and inserts inventory data for all products across all locations in the database."
+      operationId: "generateInventoryData"
+      produces:
+        - "text/plain"
+      responses:
+        "201":
+          description: "Successfully generated inventory data."
+          schema:
+            type: "string"
+        "500":
+          description: "Internal server error."
+          schema:
+            type: "string"
+  /orders:
+    get:
+      tags:
+        - "Orders"
+      summary: "Retrieve all orders"
+      description: "Fetches all orders in the system."
+      operationId: "findAllOrders"
+      produces:
+        - "application/json"
+      responses:
+        "200":
+          description: "List of all orders."
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/OrderDTO"
+    post:
+      tags:
+        - "Orders"
+      summary: "Create a new order"
+      description: "Creates a new order with associated order details."
+      operationId: "createOrder"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - name: "body"
+          in: "body"
+          description: "Details of the new order to create."
+          required: true
+          schema:
+            $ref: "#/definitions/OrderCreationDTO"
+      responses:
+        "201":
+          description: "Order successfully created."
+          schema:
+            $ref: "#/definitions/OrderDTO"
+        "500":
+          description: "Internal server error."
+          schema:
+            type: "string"
+  /orders/{id}:
+    get:
+      tags:
+        - "Orders"
+      summary: "Retrieve an order by ID"
+      description: "Fetches the details of a specific order by its ID."
+      operationId: "findOrderById"
+      produces:
+        - "application/json"
+      parameters:
+        - name: "id"
+          in: "path"
+          description: "ID of the order to fetch."
+          required: true
+          type: "integer"
+          format: "int64"
+      responses:
+        "200":
+          description: "Details of the specified order."
+          schema:
+            $ref: "#/definitions/OrderDTO"
+        "404":
+          description: "Order not found."
+          schema:
+            type: "string"
+definitions:
+  Alert:
+    type: "object"
+    properties:
+      id:
+        type: "integer"
+        format: "int64"
+        description: "Alert ID (generated by the system)"
+      productId:
+        type: "integer"
+        format: "int64"
+        description: "ID of the associated product"
+      locationId:
+        type: "integer"
+        format: "int64"
+        description: "ID of the location where the alert occurred"
+      category:
+        type: "string"
+        description: "Category of the alert"
+      createdAt:
+        type: "string"
+        format: "date-time"
+        description: "Timestamp when the alert was created"
+  Product:
+    type: "object"
+    properties:
+      id:
+        type: "integer"
+        format: "int64"
+        description: "Unique identifier for the product (generated by the system)"
+      category:
+        type: "object"
+        $ref: "#/definitions/Category"
+        description: "Category the product belongs to"
+      name:
+        type: "string"
+        description: "Name of the product"
+      description:
+        type: "string"
+        description: "Description of the product"
+      price:
+        type: "number"
+        format: "double"
+        description: "Price of the product"
+  ProductDTO:
+    type: "object"
+    properties:
+      id:
+        type: "integer"
+        format: "int64"
+        description: "Unique identifier for the product"
+      category:
+        type: "string"
+        description: "Category of the product"
+      name:
+        type: "string"
+        description: "Name of the product"
+      description:
+        type: "string"
+        description: "Description of the product"
+      price:
+        type: "number"
+        format: "double"
+        description: "Price of the product"
+  Category:
+    type: "object"
+    properties:
+      id:
+        type: "integer"
+        format: "int64"
+        description: "Unique identifier for the category"
+      name:
+        type: "string"
+        description: "Name of the category"
+  CategoryDTO:
+    type: "object"
+    properties:
+      id:
+        type: "integer"
+        format: "int64"
+        description: "Unique identifier for the category"
+      name:
+        type: "string"
+        description: "Name of the category"
+      description:
+        type: "string"
+        description: "Description of the category"
+  Customer:
+    type: "object"
+    properties:
+      id:
+        type: "integer"
+        format: "int64"
+        description: "Unique identifier for the customer (generated by the system)"
+      name:
+        type: "string"
+        description: "Name of the customer"
+      username:
+        type: "string"
+        description: "Unique username for the customer"
+      email:
+        type: "string"
+        description: "Email address of the customer"
+      password:
+        type: "string"
+        description: "Password for the customer account (stored securely)"
+      createdAt:
+        type: "string"
+        format: "date-time"
+        description: "Timestamp when the customer was created"
+      updatedAt:
+        type: "string"
+        format: "date-time"
+        description: "Timestamp when the customer was last updated"
+  CustomerDTO:
+    type: "object"
+    properties:
+      id:
+        type: "integer"
+        format: "int64"
+        description: "Unique identifier for the customer"
+      name:
+        type: "string"
+        description: "Name of the customer"
+      username:
+        type: "string"
+        description: "Unique username for the customer"
+      email:
+        type: "string"
+        description: "Email address of the customer"
+      createdAt:
+        type: "string"
+        format: "date-time"
+        description: "Timestamp when the customer was created"
+      updatedAt:
+        type: "string"
+        format: "date-time"
+        description: "Timestamp when the customer was last updated"
+  OrderDTO:
+    type: "object"
+    properties:
+      id:
+        type: "integer"
+        format: "int64"
+        description: "Unique identifier for the order."
+      customerId:
+        type: "integer"
+        format: "int64"
+        description: "Identifier of the customer who placed the order."
+      locationId:
+        type: "integer"
+        format: "int64"
+        description: "Identifier of the location associated with the order."
+      status:
+        type: "string"
+        description: "Current status of the order."
+      createdAt:
+        type: "string"
+        format: "date-time"
+        description: "Timestamp when the order was created."
+      updatedAt:
+        type: "string"
+        format: "date-time"
+        description: "Timestamp when the order was last updated."
+      orderDetails:
+        type: "array"
+        items:
+          $ref: "#/definitions/OrderDetail"
+  OrderCreationDTO:
+    type: "object"
+    properties:
+      customerId:
+        type: "integer"
+        format: "int64"
+        description: "Identifier of the customer placing the order."
+      locationId:
+        type: "integer"
+        format: "int64"
+        description: "Identifier of the location associated with the order."
+      status:
+        type: "string"
+        description: "Status of the new order."
+      orderDetails:
+        type: "array"
+        items:
+          $ref: "#/definitions/OrderDetailCreationDTO"
+  OrderDetailCreationDTO:
+    type: "object"
+    properties:
+      productId:
+        type: "integer"
+        format: "int64"
+        description: "Identifier of the product in the order."
+      quantity:
+        type: "integer"
+        description: "Quantity of the product ordered."
+      unitPrice:
+        type: "number"
+        format: "double"
+        description: "Unit price of the product in the order."
+  OrderDetail:
+    type: "object"
+    properties:
+      productId:
+        type: "integer"
+        format: "int64"
+        description: "Identifier of the product in the order."
+      quantity:
+        type: "integer"
+        description: "Quantity of the product ordered."
+      unitPrice:
+        type: "number"
+        format: "double"
+        description: "Unit price of the product in the order."
+
+  
