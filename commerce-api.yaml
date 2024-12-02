@@ -15,6 +15,8 @@ tags:
     description: "Operations related to customers"
   - name: "Inventories"
     description: "Operations related to inventories"
+  - name: "Optimization"
+    description: "Operations related to optimization"
   - name: "Orders"
     description: "Operations related to orders"
 produces:
@@ -342,6 +344,35 @@ paths:
           description: "Internal server error"
           schema:
             type: "string"
+  /config:
+    get:
+      tags:
+        - "Optimization"
+      summary: "Retrieve Optimization Configuration"
+      description: "Fetches the configuration currently used by the optimization service to run the genetic algorithm."
+      responses:
+        "200":
+          description: "Ok"
+          schema:
+            $ref: "#/definitions/OptimizationConfig"
+        "500":
+          description: "Internal Server Error."
+    put:
+      tags:
+        - "Optimization"
+      summary: "Update Optimization Configuration"
+      description: "Makes changes to the configuration currently being used by the optimization service."
+      parameters:
+        - in: "body"
+          name: "config"
+          required: true
+          schema:
+            $ref: "#/definitions/OptimizationConfig"
+      responses:
+        "204":
+          description: "No content"
+        "400":
+          description: "Bad Request. Optimization config is missing or invalid."
   /orders:
     get:
       tags:
@@ -547,6 +578,25 @@ definitions:
         type: "string"
         format: "date-time"
         description: "Timestamp when the customer was last updated"
+  OptimizationConfig:
+    type: "object"
+    properties:
+      mutationRate:
+        type: "number"
+        format: "double"
+        description: "Mutation rate for the genetic algorithm. Value should be between 0 and 1."
+      populationSize:
+        type: "integer"
+        format: "int32"
+        description: "Number of individuals in the population."
+      generations:
+        type: "integer"
+        format: "int32"
+        description: "Number of generations the algorithm should run."
+    required:
+      - mutationRate
+      - populationSize
+      - generations
   OrderDTO:
     type: "object"
     properties:
