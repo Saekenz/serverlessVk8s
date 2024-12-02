@@ -16,7 +16,7 @@ import java.util.Random;
 public class InventoryDataGenerator {
     private static final int MIN_TARGET_STOCK = 100;
     private static final int MAX_TARGET_STOCK = 500;
-    private static final double MIN_CURRENT_STOCK_PERCENT = 0.65;
+    private static final double MIN_CURRENT_STOCK_PERCENT = 0.55;
 
     private final Random random;
 

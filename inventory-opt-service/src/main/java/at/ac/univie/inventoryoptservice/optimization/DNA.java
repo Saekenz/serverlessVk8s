@@ -130,13 +130,13 @@ public class DNA {
         double transferDistance = calculateDistanceMoved(originalDNA, distanceMatrix);
         double fitnessDistance = calculateDistanceFitness(transferDistance, maxPossibleTransferDistance);
 
-        // combine demand coverage and transfer distance into final fitness score
-        fitness = (fitnessDemand + fitnessDistance) / 2;
+        // use weighted average formula to combine both fitness values
+        fitness = (fitnessDemand * 0.7) + (fitnessDistance * 0.3);
 
         log.debug("Fitness: {}", fitness);
     }
 
-    private double calculateDemandCoverage() {
+    public double calculateDemandCoverage() {
         double demandCoverageSum = 0.0;
 
         for (Chromosome chromosome : chromosomes) {

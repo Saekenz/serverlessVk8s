@@ -138,7 +138,9 @@ public class InventoryServiceImpl implements IInventoryService {
         int numInsertedInventories = inventoryRepository.saveAll(generatedInventories).size();
 
         if (numInsertedInventories == locationIds.size() * productIds.size()) {
-            return new ResponseEntity<>("Successfully generated inventory data!", HttpStatus.CREATED);
+            return new ResponseEntity<>(String.format("Successfully generated %s inventory entries!",
+                    numInsertedInventories),
+                    HttpStatus.CREATED);
         }
         else {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();

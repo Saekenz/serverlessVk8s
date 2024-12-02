@@ -80,6 +80,7 @@ public class InventoryServiceImpl implements IInventoryService {
         // fetch data needed for optimization
         List<Chromosome> initialChromosomes = fetchInventoryData();
         DNA initalDNA = new DNA(initialChromosomes);
+        log.info("Initial DNA fitness: {}", initalDNA.calculateDemandCoverage());
 
         // run the genetic algorithm to get an optimized allocation
         DNA bestDNA = geneticAlgorithm.runGeneticAlgorithm(initalDNA, config);
