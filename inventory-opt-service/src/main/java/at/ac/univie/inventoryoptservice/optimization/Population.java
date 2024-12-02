@@ -44,12 +44,12 @@ public class Population {
 
     public void initializePopulation(int populationSize) {
         setProductsAndLocations(initialDNA);
-        calculateDistanceMatrix();
+        initDistanceMatrix();
         setMaxPossibleTransferDistance();
         generatePermutations(initialDNA, populationSize);
     }
 
-    private void calculateDistanceMatrix() {
+    private void initDistanceMatrix() {
         this.distanceMatrix = distanceCalculator.calculateDistanceMatrix(uniqueLocations);
     }
 

@@ -18,6 +18,8 @@ import org.springframework.integration.channel.PublishSubscribeChannel;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.handler.annotation.Header;
 
+import java.util.Objects;
+
 @Configuration
 @Slf4j
 @RequiredArgsConstructor
@@ -47,7 +49,7 @@ public class InboundConfiguration {
     @ServiceActivator(inputChannel = "pubsubInputChannel")
     public void messageReceiver(
             String payload, @Header(GcpPubSubHeaders.ORIGINAL_MESSAGE) BasicAcknowledgeablePubsubMessage message) {
-        log.info("Message arrived! Payload: {}", payload);
+        log.info("Message arrived! Payload: {}", Objects.equals(payload, "") ? "-" : payload);
 
         // Acknowledge the message to avoid PubSub re-sending it
         message.ack();
