@@ -1,15 +1,13 @@
 package at.ac.univie.inventoryoptservice.service;
 
 import at.ac.univie.inventoryoptservice.config.OptimizationConfig;
-import at.ac.univie.inventoryoptservice.config.OptimizationConfigFactory;
 import at.ac.univie.inventoryoptservice.dto.InventoryAllocationDTO;
 import at.ac.univie.inventoryoptservice.config.PubSubConfiguration;
 import at.ac.univie.inventoryoptservice.optimization.*;
 import at.ac.univie.inventoryoptservice.outbound.OutboundConfiguration;
 import at.ac.univie.inventoryoptservice.repository.InventoryRepository;
 import at.ac.univie.inventoryoptservice.util.OptimizationMessageBuilder;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import at.ac.univie.inventoryoptservice.util.OptimizationMessageParser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @Slf4j
@@ -24,6 +23,7 @@ import java.util.List;
 public class InventoryServiceImpl implements IInventoryService {
     private final OutboundConfiguration.PubSubOutboundGateway messagingGateway;
     private final OptimizationMessageBuilder optimizationMessageBuilder;
+    private final OptimizationMessageParser optimizationMessageParser;
 
     @Autowired
     private InventoryRepository inventoryRepository;
@@ -40,10 +40,42 @@ public class InventoryServiceImpl implements IInventoryService {
         return ResponseEntity.ok(invAllocations);
     }
 
+    /**
+     * Fetches the configuration currently used by the optimization service to run the genetic algorithm.
+     *
+     * @return {@link ResponseEntity} containing the current optimization configuration in JSON format and
+     * status code {@code 200}.
+     */
+    @Override
+    public ResponseEntity<?> getOptimizationConfig() {
+        return ResponseEntity.ok(optimizationConfig);
+    }
+
+    /**
+     * Makes changes to the configuration that is currently being used by the optimization service to run the
+     * genetic algorithm.
+     *
+     * @param config {@link OptimizationConfig} object containing the optimization parameters.
+     * @return Empty {@link ResponseEntity} and status code {@code 204}.
+     */
+    @Override
+    public ResponseEntity<?> updateOptimizationConfig(OptimizationConfig config) {
+        if (config != null) {
+            optimizationConfig.setConfig(config);
+            log.info("Optimization config updated: {}", optimizationConfig.toString());
+            return ResponseEntity.noContent().build();
+        }
+        else {
+            return ResponseEntity.badRequest().body("Optimization config is missing parameters!");
+        }
+    }
+
     @Override
     public void handleIncomingOptimizationMessage(String message) {
-        // retrieve optimization configuration from incoming message
-        OptimizationConfig config = parseOptimizationMessage(message);
+        // optionally retrieve optimization configuration from incoming message
+        OptimizationConfig config = Objects.requireNonNullElse(
+                optimizationMessageParser.parseOptimizationMessage(message),
+                optimizationConfig);
 
         // start timer to measure genetic algorithm runtime
         long startTime = System.nanoTime();
@@ -69,42 +101,6 @@ public class InventoryServiceImpl implements IInventoryService {
 
         // 7) create and send message that signals completion of optimization
         createAndSendOptimizationFinishedMessage();
-    }
-
-    @Override
-    public ResponseEntity<?> updateOptimizationConfig(OptimizationConfig config) {
-        if (config != null) {
-            optimizationConfig.setConfig(config);
-            log.info("Optimization config updated: {}", optimizationConfig.toString());
-            return ResponseEntity.noContent().build();
-        }
-        else {
-            return ResponseEntity.badRequest().body("Optimization config is missing parameters!");
-        }
-    }
-
-    @Override
-    public ResponseEntity<?> getOptimizationConfig() {
-        return ResponseEntity.ok(optimizationConfig);
-    }
-
-    /**
-     * Parses a message that adheres to the schema of {@link OptimizationConfig}.
-     *
-     * @param message The message that is to be parsed.
-     * @return A {@link OptimizationConfig} object containing the information found in the message. Returns a
-     * {@link OptimizationConfig} object with default values if an error occurs during parsing.
-     */
-    private OptimizationConfig parseOptimizationMessage(String message) {
-        try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            return objectMapper.readValue(message, OptimizationConfig.class);
-        } catch (JsonProcessingException e) {
-            log.error(e.getMessage());
-
-            // return default config if parsing fails
-            return OptimizationConfigFactory.createDefaultOptConfig();
-        }
     }
 
     /**

@@ -190,12 +190,7 @@ public class InventoryServiceImpl implements IInventoryService {
     }
 
     public void createAndSendOptMsg() {
-        try {
-            OptimizationMessageDTO optMsg = new OptimizationMessageDTO();
-            String optMsgJson = objectMapper.writeValueAsString(optMsg);
-            messagingGateway.sendToPubSub(optMsgJson, pubSubConfiguration.getOptimizeTopic());
-        } catch (JsonProcessingException e) {
-            log.error("Error while creating optimization message: {}", e.getMessage());
-        }
+        String optMsgJson = "";
+        messagingGateway.sendToPubSub(optMsgJson, pubSubConfiguration.getOptimizeTopic());
     }
 }
