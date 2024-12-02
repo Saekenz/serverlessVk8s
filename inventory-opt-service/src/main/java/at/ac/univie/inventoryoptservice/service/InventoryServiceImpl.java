@@ -31,6 +31,9 @@ public class InventoryServiceImpl implements IInventoryService {
     @Autowired
     private PubSubConfiguration pubSubConfiguration;
 
+    @Autowired
+    private OptimizationConfig optimizationConfig;
+
     @Override
     public ResponseEntity<?> fetchInventoryAllocation() {
         List<InventoryAllocationDTO> invAllocations = inventoryRepository.fetchInventoryWithLocation();
@@ -50,6 +53,7 @@ public class InventoryServiceImpl implements IInventoryService {
         DNA initalDNA = new DNA(initialChromosomes);
 
         // run the genetic algorithm to get an optimized allocation
+        log.info("Used config: {}", config);
         DNA bestDNA = runGeneticAlgorithm(initalDNA, config);
 
         // end timer and log the elapsed time
@@ -65,6 +69,23 @@ public class InventoryServiceImpl implements IInventoryService {
 
         // 7) create and send message that signals completion of optimization
         createAndSendOptimizationFinishedMessage();
+    }
+
+    @Override
+    public ResponseEntity<?> updateOptimizationConfig(OptimizationConfig config) {
+        if (config != null) {
+            optimizationConfig.setConfig(config);
+            log.info("Optimization config updated: {}", optimizationConfig.toString());
+            return ResponseEntity.noContent().build();
+        }
+        else {
+            return ResponseEntity.badRequest().body("Optimization config is missing parameters!");
+        }
+    }
+
+    @Override
+    public ResponseEntity<?> getOptimizationConfig() {
+        return ResponseEntity.ok(optimizationConfig);
     }
 
     /**
