@@ -8,7 +8,7 @@ COPY build.gradle settings.gradle ./
 COPY src ./src
 
 # Build the application
-RUN gradle clean build
+RUN gradle clean build -i
 
 # Stage 2: Run the application
 FROM openjdk:17-jdk-slim
