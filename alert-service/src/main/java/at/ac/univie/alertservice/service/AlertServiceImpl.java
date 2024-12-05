@@ -5,6 +5,7 @@ import at.ac.univie.alertservice.model.AlertDTO;
 import at.ac.univie.alertservice.repository.AlertRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -76,6 +78,24 @@ public class AlertServiceImpl implements IAlertService {
         } catch (Exception e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @Override
+    public ResponseEntity<?> saveAlert(String payload, HttpServletRequest request) {
+        try {
+            Alert alert = objectMapper.readValue(payload, Alert.class);
+            Alert createdAlert = alertRepository.save(alert);
+
+            URI locationUri = new URI(request.getRequestURL().toString() + "/" + createdAlert.getId());
+
+            return ResponseEntity.created(locationUri)
+                    .body(modelMapper.map(createdAlert, AlertDTO.class));
+        } catch (JsonProcessingException e) {
+            log.error("Error processing JSON: {}", e.getMessage());
+        } catch (URISyntaxException e) {
+            log.error("Error creating URI: {}", e.getMessage());
+        }
+        return ResponseEntity.badRequest().build();
     }
 
     @Override

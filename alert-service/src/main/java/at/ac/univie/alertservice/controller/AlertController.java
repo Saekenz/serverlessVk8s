@@ -2,6 +2,7 @@ package at.ac.univie.alertservice.controller;
 
 import at.ac.univie.alertservice.model.Alert;
 import at.ac.univie.alertservice.service.IAlertService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -22,9 +23,14 @@ public class AlertController {
         return alertService.findById(id);
     }
 
-    @PostMapping
+    @PostMapping("/test")
     public ResponseEntity<?> createAlert(@RequestBody Alert alert) {
         return alertService.save(alert);
+    }
+
+    @PostMapping()
+    public ResponseEntity<?> createAlert(@RequestBody String payload, HttpServletRequest request) {
+        return alertService.saveAlert(payload, request);
     }
 
     @DeleteMapping("/{id}")

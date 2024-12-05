@@ -7,10 +7,10 @@ WORKDIR /usr/src/app
 COPY . .
 
 # Build the application
-RUN gradle clean build -x test -i
+RUN gradle clean build -x test
 
 # Stage 2: Run the application
-FROM eclipse-temurin:17-jre-alpine
+FROM openjdk:17-jdk-slim
 WORKDIR /usr/src/app
 
 # Copy the JAR file from the build stage
