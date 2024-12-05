@@ -36,6 +36,10 @@ dependencies {
 	implementation 'org.springframework.integration:spring-integration-jdbc'
 	implementation 'org.springframework.integration:spring-integration-jpa'
 	implementation 'org.springframework.integration:spring-integration-http'
+
+	// https://mvnrepository.com/artifact/com.google.cloud.sql/postgres-socket-factory/1.21.0
+	implementation 'com.google.cloud.sql:postgres-socket-factory:1.21.0'
+
 	testImplementation 'org.springframework.integration:spring-integration-test'
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'org.postgresql:postgresql'

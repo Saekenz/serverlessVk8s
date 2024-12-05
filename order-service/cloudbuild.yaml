@@ -1,0 +1,23 @@
+steps:
+  # Docker Build
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/${_PROJECT_ID}/order-service', '.']
+
+  # Docker Push
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/${_PROJECT_ID}/order-service']
+
+  # Deploy the service to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'gcloud'
+    timeout: 240s
+    args: [ 'run', 'deploy', 'order-service',
+            '--image', 'gcr.io/${_PROJECT_ID}/order-service',
+            '--region', 'europe-west4',
+            '--platform', 'managed',
+            '--allow-unauthenticated']
+images:
+  - 'gcr.io/$PROJECT_ID/order-service'
+
+substitutions:
+  _PROJECT_ID: 'serverless-k8s-study'
