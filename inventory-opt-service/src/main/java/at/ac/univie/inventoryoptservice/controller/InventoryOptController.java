@@ -31,4 +31,9 @@ public class InventoryOptController {
     public ResponseEntity<?> getOptimizationConfig() {
         return inventoryService.getOptimizationConfig();
     }
+
+    @PostMapping("/optimize")
+    public ResponseEntity<?> processOptimizationRequest(@RequestBody String payload) {
+        return inventoryService.processOptimizationRequest(payload);
+    }
 }

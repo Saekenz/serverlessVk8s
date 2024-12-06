@@ -68,6 +68,22 @@ public class InventoryServiceImpl implements IInventoryService {
     }
 
     @Override
+    public ResponseEntity<?> processOptimizationRequest(String payload) {
+        if (payload != null) {
+            log.info("Received optimization request: {}", payload);
+
+            // Handle the optimization asynchronously
+            handleIncomingOptimizationMessage(payload);
+
+            // Acknowledge the message
+            return ResponseEntity.accepted().build();
+        }
+        else {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @Override
     public void handleIncomingOptimizationMessage(String message) {
         // optionally retrieve optimization configuration from incoming message
         OptimizationConfig config = Objects.requireNonNullElse(
