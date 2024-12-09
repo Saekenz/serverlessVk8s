@@ -1,0 +1,25 @@
+steps:
+  # Docker Build
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/${_PROJECT_ID}/alert-service', '.']
+
+  # Docker Push
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/${_PROJECT_ID}/alert-service']
+
+  # Deploy the service to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'gcloud'
+    timeout: 240s
+    args: [ 'run', 'deploy', 'catalog-service',
+            '--image', 'gcr.io/${_PROJECT_ID}/alert-service',
+            '--region', 'europe-west4',
+            '--platform', 'managed',
+            '--allow-unauthenticated',
+            '--service-account', '878993805464-compute@developer.gserviceaccount.com',
+            '--set-env-vars', 'DATABASE_HOST=${_DATABASE_HOST}',
+            '--set-env-vars', 'DATABASE_USER=${_DATABASE_USER}',
+            '--set-env-vars', 'DATABASE_PASSWORD=${_DATABASE_PASSWORD}']
+
+substitutions:
+  _PROJECT_ID: 'serverless-k8s-study'
