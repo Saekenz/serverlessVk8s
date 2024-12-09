@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.*;
 
 @CrossOrigin("*")
 @RestController
-@RequestMapping("/inventories")
 @RequiredArgsConstructor
 @Slf4j
 public class InventoryController {
@@ -22,20 +21,32 @@ public class InventoryController {
     private final OutboundConfiguration.PubSubOutboundGateway messagingGateway;
     private final PubSubConfiguration pubSubConfiguration;
 
+    // for testing only
     @PostMapping("/sendOpt")
     public void sendOptMessage(@RequestBody String message) {
         log.info("Sending optimization request message {}", message);
         messagingGateway.sendToPubSub(message, pubSubConfiguration.getOptimizeTopic());
     }
 
+    // for testing only
     @PostMapping("/sendAlert")
     public void sendAlertMessage(@RequestBody String message) {
         log.info("Sending alert message {}", message);
         messagingGateway.sendToPubSub(message, pubSubConfiguration.getAlertTopic());
     }
 
-    @PostMapping("/generate")
+    @PostMapping("/inventories/generate")
     public ResponseEntity<?> generateInventories() {
         return inventoryService.generateInventoryData();
+    }
+
+    @PostMapping("/optimization/finished")
+    public ResponseEntity<?> processOptimizationFinishedNotification(@RequestBody String payload) {
+        return inventoryService.processOptimizationFinishedNotification(payload);
+    }
+
+    @PostMapping("/inventories/update-stock")
+    public ResponseEntity<?> processStockUpdateMessage(@RequestBody String payload) {
+        return inventoryService.processStockUpdateMessage(payload);
     }
 }

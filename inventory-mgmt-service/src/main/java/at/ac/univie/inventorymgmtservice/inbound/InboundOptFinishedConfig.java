@@ -49,7 +49,7 @@ public class InboundOptFinishedConfig {
             String payload,
             @Header(GcpPubSubHeaders.ORIGINAL_MESSAGE) BasicAcknowledgeablePubsubMessage message) {
         log.info("Message arrived! Payload: {}", payload);
-        inventoryService.handleIncomingOptFinishedMessage();
+        inventoryService.resumeMessageProcessing();
         message.ack();
     }
 }

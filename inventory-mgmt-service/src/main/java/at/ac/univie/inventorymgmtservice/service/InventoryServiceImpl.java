@@ -9,6 +9,7 @@ import at.ac.univie.inventorymgmtservice.repository.ProductRepository;
 import at.ac.univie.inventorymgmtservice.util.InventoryDataGenerator;
 import at.ac.univie.inventorymgmtservice.util.MessageProcessingControl;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -159,11 +160,68 @@ public class InventoryServiceImpl implements IInventoryService {
     }
 
     @Override
-    public void handleIncomingOptFinishedMessage() {
-        log.info("Received optimization finished message");
+    public void resumeMessageProcessing() {
         processQueuedMessages();
         processingControl.resumeProcessing();
         log.info("Processing of messages resumed.");
+    }
+
+    @Override
+    public ResponseEntity<?> processOptimizationFinishedNotification(String payload) {
+        if (payload != null) {
+            log.info("Received optimization finished notification: {}", payload);
+
+            // Resume message processing asynchronously
+            resumeMessageProcessing();
+
+            // Acknowledge the message
+            return ResponseEntity.accepted().build();
+        }
+        else {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @Override
+    public ResponseEntity<?> processStockUpdateMessage(String payload) {
+        if (payload != null) {
+            log.info("Received stock update notification: {}", payload);
+
+            // Parse the message
+            InventoryTargetStockUpdateDTO updateDTO = parseStockUpdateMessage(payload);
+
+            if (updateDTO != null) {
+                updateTargetStock(updateDTO);
+                return ResponseEntity.accepted().build();
+            }
+            else {
+                ResponseEntity.badRequest().build();
+            }
+        }
+
+        return ResponseEntity.badRequest().build();
+    }
+
+    private InventoryTargetStockUpdateDTO parseStockUpdateMessage(String message) {
+        try {
+            JsonNode jsonNode = objectMapper.readTree(message);
+
+            if (isStockUpdateMessageValid(jsonNode)) {
+                return objectMapper.treeToValue(jsonNode, InventoryTargetStockUpdateDTO.class);
+            }
+            else {
+                log.warn("Incoming stock update message does not adhere to the required schema!");
+                return null;
+            }
+        } catch (JsonProcessingException e) {
+            log.error(e.getMessage());
+            return null;
+        }
+    }
+
+    private boolean isStockUpdateMessageValid(JsonNode jsonNode) {
+        return jsonNode.has("productId") && jsonNode.has("locationId")
+                && jsonNode.has("quantity");
     }
 
     private void logUpdatedRows(int rowsUpdated) {
