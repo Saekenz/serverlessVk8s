@@ -14,10 +14,10 @@ FROM openjdk:17-jdk-slim
 WORKDIR /usr/src/app
 
 # Copy the JAR file from the build stage
-COPY --from=build /usr/src/app/build/libs/*.jar alert-service.jar
+COPY --from=build /usr/src/app/build/libs/alert-service-0.0.1-SNAPSHOT.jar /usr/src/app/app.jar
 
 # Expose the port the application runs on
 EXPOSE 8086
 
 # Execute the application
-CMD ["java", "-jar", "alert-service.jar"]
+CMD ["java", "-jar", "app.jar"]
