@@ -1,18 +1,18 @@
 steps:
   # Docker Build
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/${_PROJECT_ID}/catalog-service', '.']
+    args: ['build', '-t', 'gcr.io/${_PROJECT_ID}/customer-service', '.']
 
   # Docker Push
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/${_PROJECT_ID}/catalog-service']
+    args: ['push', 'gcr.io/${_PROJECT_ID}/customer-service']
 
   # Deploy the service to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: 'gcloud'
     timeout: 240s
-    args: [ 'run', 'deploy', 'catalog-service',
-            '--image', 'gcr.io/${_PROJECT_ID}/catalog-service',
+    args: [ 'run', 'deploy', 'customer-service',
+            '--image', 'gcr.io/${_PROJECT_ID}/customer-service',
             '--region', 'europe-west4',
             '--platform', 'managed',
             '--allow-unauthenticated',

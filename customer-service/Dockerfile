@@ -9,15 +9,18 @@ COPY . .
 # Build the application
 RUN gradle clean build -x test
 
+# Debugging step: List contents of the build/libs directory
+RUN ls -l /usr/src/app/build/libs
+
 # Stage 2: Run the application
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /usr/src/app
 
 # Copy the JAR file from the build stage
-COPY --from=build /usr/src/app/build/libs/*.jar customer-service.jar
+COPY --from=build /usr/src/app/build/libs/customer-service-0.0.1-SNAPSHOT.jar /usr/src/app/app.jar
 
 # Expose the port the application runs on
 EXPOSE 8082
 
 # Execute the application
-CMD ["java", "-jar", "customer-service.jar"]
+CMD ["java", "-jar", "app.jar"]
