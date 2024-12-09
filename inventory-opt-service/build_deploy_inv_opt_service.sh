@@ -3,11 +3,20 @@
 # Exit on error
 set -e
 
+# Ensure all required arguments are supplied
+if [ "$#" -ne 3 ]; then
+  echo "Usage: $0 <DATABASE_HOST> <DATABASE_USER> <DATABASE_PASSWORD>"
+  exit 1
+fi
+
 # Define variables
 IMAGE_NAME="inventory-opt-service"
 GCR_IMAGE="gcr.io/serverless-k8s-study/$IMAGE_NAME"
 REGION="europe-west4"
 PLATFORM="managed"
+DATABASE_HOST=$1
+DATABASE_USER=$2
+DATABASE_PASSWORD=$3
 
 # Build and tag the Docker image
 echo "Building Docker image..."
@@ -24,6 +33,5 @@ gcloud run deploy $IMAGE_NAME \
     --platform $PLATFORM \
     --region $REGION \
     --allow-unauthenticated \
-    --set-env-vars MUTATION_RATE=0.01,POPULATION_SIZE=60,GENERATIONS=300
-
+    --set-env-vars MUTATION_RATE=0.01,POPULATION_SIZE=60,GENERATIONS=300,DATABASE_HOST="$DATABASE_HOST",DATABASE_USER="$DATABASE_USER",DATABASE_PASSWORD="$DATABASE_PASSWORD"
 echo "Deployment completed successfully."
