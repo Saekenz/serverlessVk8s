@@ -15,7 +15,11 @@ steps:
             '--image', 'gcr.io/${_PROJECT_ID}/order-service',
             '--region', 'europe-west4',
             '--platform', 'managed',
-            '--allow-unauthenticated']
+            '--allow-unauthenticated',
+            '--service-account', '878993805464-compute@developer.gserviceaccount.com',
+            '--set-env-vars', 'DATABASE_HOST=${_DATABASE_HOST}',
+            '--set-env-vars', 'DATABASE_USER=${_DATABASE_USER}',
+            '--set-env-vars', 'DATABASE_PASSWORD=${_DATABASE_PASSWORD}']
 images:
   - 'gcr.io/$PROJECT_ID/order-service'
 
