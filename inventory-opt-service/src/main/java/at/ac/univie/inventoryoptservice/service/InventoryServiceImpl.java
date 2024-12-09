@@ -2,6 +2,7 @@ package at.ac.univie.inventoryoptservice.service;
 
 import at.ac.univie.inventoryoptservice.config.OptimizationConfig;
 import at.ac.univie.inventoryoptservice.dto.InventoryAllocationDTO;
+import at.ac.univie.inventoryoptservice.dto.StockOptimizationDTO;
 import at.ac.univie.inventoryoptservice.optimization.*;
 import at.ac.univie.inventoryoptservice.outbound.OutboundMessageHandler;
 import at.ac.univie.inventoryoptservice.repository.InventoryRepository;
@@ -106,12 +107,8 @@ public class InventoryServiceImpl implements IInventoryService {
         long endTime = System.nanoTime();
         logElapsedTime(startTime, endTime);
 
-        // create stock optimization messages
-        List<String> stockOptimizationMessages = optimizationMessageBuilder
-                .createStockOptimizationMessagesFromDNA(bestDNA);
-
-        // send the messages to the optimization topic
-        outboundMessageHandler.sendStockOptimizationMessages(stockOptimizationMessages);
+        // apply stock optimization to the database
+        applyStockOptimization(bestDNA);
 
         // create and send message that signals completion of optimization
         outboundMessageHandler.createAndSendOptimizationFinishedMessage();
@@ -127,6 +124,37 @@ public class InventoryServiceImpl implements IInventoryService {
         return inventoryRepository.fetchInventoryWithLocation().stream()
                 .map(InventoryAllocationDTO::toChromosome)
                 .toList();
+    }
+
+    private void applyStockOptimization(DNA dna) {
+        List<StockOptimizationDTO> optimizationDTOS = optimizationMessageBuilder
+                .createStockOptimizationFromDNA(dna);
+
+        if (optimizationDTOS.isEmpty()) {
+            log.info("No stock optimizations to apply.");
+            return;
+        }
+
+        int numRowsUpdated = applyUpdatesFromList(optimizationDTOS);
+
+        if (numRowsUpdated != optimizationDTOS.size()) {
+            log.warn("Mismatch in stock optimization updates! Expected {} updates, but {} rows were updated.",
+                    optimizationDTOS.size(), numRowsUpdated);
+        }
+        else {
+            log.info("Successfully applied stock optimization to {} entries.", numRowsUpdated);
+        }
+    }
+
+    private int applyUpdatesFromList(List<StockOptimizationDTO> dtos) {
+        int numRowsUpdated = 0;
+
+        for (StockOptimizationDTO dto : dtos) {
+            numRowsUpdated += inventoryRepository.updateCurrentStock(dto.getProductId(),
+                    dto.getLocationId(), dto.getNewCurrentStock());
+        }
+
+        return numRowsUpdated;
     }
 
     /**

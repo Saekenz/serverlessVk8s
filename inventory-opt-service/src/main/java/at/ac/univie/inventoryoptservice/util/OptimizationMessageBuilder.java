@@ -27,7 +27,7 @@ public class OptimizationMessageBuilder {
      * @param dna The {@link DNA} object that is to be converted.
      * @return A {@link List} of {@link StockOptimizationDTO} objects.
      */
-    private List<StockOptimizationDTO> createStockOptimizationFromDNA(DNA dna) {
+    public List<StockOptimizationDTO> createStockOptimizationFromDNA(DNA dna) {
         return dna.getChromosomes().stream()
                 .map(Chromosome::toStockOptimizationDTO)
                 .toList();
