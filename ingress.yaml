@@ -1,0 +1,20 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ecommerce-ingress
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: 34.32.163.221.nip.io
+      http:
+        paths:
+          - path: /alerts
+            pathType: Prefix
+            backend:
+              service:
+                name: alert-service
+                port:
+                  number: 80
