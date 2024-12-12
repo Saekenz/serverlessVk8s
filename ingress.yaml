@@ -8,7 +8,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: 34.32.163.221.nip.io
+    - host: 34.91.217.192.nip.io
       http:
         paths:
           - path: /alerts
@@ -16,5 +16,54 @@ spec:
             backend:
               service:
                 name: alert-service
+                port:
+                  number: 80
+          - path: /categories
+            pathType: Prefix
+            backend:
+              service:
+                name: catalog-service
+                port:
+                  number: 80
+          - path: /products
+            pathType: Prefix
+            backend:
+              service:
+                name: catalog-service
+                port:
+                  number: 80
+          - path: /customers
+            pathType: Prefix
+            backend:
+              service:
+                name: customer-service
+                port:
+                  number: 80
+          - path: /inventories
+            pathType: Prefix
+            backend:
+              service:
+                name: inventory-mgmt-service
+                port:
+                  number: 80
+          - path: /config
+            pathType: Prefix
+            backend:
+              service:
+                name: inventory-opt-service
+                port:
+                  number: 80
+          - path: /optimize
+            pathType: Prefix
+            backend:
+              service:
+                name: inventory-opt-service
+                port:
+                  number: 80
+          - path: /orders
+            pathType: Prefix
+            backend:
+              service:
+                name: order-service
                 port:
                   number: 80
