@@ -17,9 +17,9 @@ steps:
             '--platform', 'managed',
             '--allow-unauthenticated',
             '--service-account', '878993805464-compute@developer.gserviceaccount.com',
-            '--set-env-vars', 'DATABASE_HOST=${_DATABASE_HOST}',
-            '--set-env-vars', 'DATABASE_USER=${_DATABASE_USER}',
-            '--set-env-vars', 'DATABASE_PASSWORD=${_DATABASE_PASSWORD}']
+            '--update-secrets', 'DATABASE_HOST=db_host:latest',
+            '--update-secrets', 'DATABASE_USER=db_user:latest',
+            '--update-secrets', 'DATABASE_PASSWORD=db_password:latest']
 images:
   - 'gcr.io/$PROJECT_ID/order-service'
 
