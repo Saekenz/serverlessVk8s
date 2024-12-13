@@ -28,6 +28,8 @@ paths:
         - "Alerts"
       summary: "Retrieve a list of alerts based on a date range"
       operationId: "findAlertsByDateRange"
+      x-google-backend:
+        address: https://alert-service-878993805464.europe-west4.run.app
       parameters:
         - name: "from"
           in: "query"
@@ -50,6 +52,8 @@ paths:
       summary: "Create a new alert"
       description: "Creates a new alert and saves it to the database."
       operationId: "createAlert"
+      x-google-backend:
+        address: https://alert-service-878993805464.europe-west4.run.app
       consumes:
         - "application/json"
       produces:
@@ -75,6 +79,8 @@ paths:
       summary: "Retrieve an alert by Id"
       description: "Fetches a specific alert by its Id."
       operationId: "findAlertById"
+      x-google-backend:
+        address: https://alert-service-878993805464.europe-west4.run.app
       parameters:
         - name: "id"
           in: "path"
@@ -96,6 +102,8 @@ paths:
       summary: "Delete an alert by Id"
       description: "Removes an alert from the database by its Id."
       operationId: "deleteAlert"
+      x-google-backend:
+        address: https://alert-service-878993805464.europe-west4.run.app
       parameters:
         - name: "id"
           in: "path"
@@ -116,6 +124,8 @@ paths:
       summary: "Retrieve all products"
       description: "Fetches a list of all products."
       operationId: "findAllProducts"
+      x-google-backend:
+        address: https://catalog-service-878993805464.europe-west4.run.app
       responses:
         "200":
           description: "Ok"
@@ -131,6 +141,8 @@ paths:
       summary: "Create a new product"
       description: "Creates a new product and returns the created product along with its URI."
       operationId: "createProduct"
+      x-google-backend:
+        address: https://catalog-service-878993805464.europe-west4.run.app
       consumes:
         - "application/json"
       parameters:
@@ -158,6 +170,8 @@ paths:
       summary: "Generate product data"
       description: "Generates a number of products and saves them to the database."
       operationId: "generateProductData"
+      x-google-backend:
+        address: https://catalog-service-878993805464.europe-west4.run.app
       produces:
         - "text/plain"
       parameters:
@@ -181,6 +195,8 @@ paths:
       summary: "Retrieve a product by Id"
       description: "Fetches a specific product by its Id."
       operationId: "findProductById"
+      x-google-backend:
+        address: https://catalog-service-878993805464.europe-west4.run.app
       parameters:
         - name: "id"
           in: "path"
@@ -204,6 +220,8 @@ paths:
       summary: "Retrieve all categories"
       description: "Fetches a list of all categories."
       operationId: "findAllCategories"
+      x-google-backend:
+        address: https://catalog-service-878993805464.europe-west4.run.app
       responses:
         "200":
           description: "Ok"
@@ -220,6 +238,8 @@ paths:
       summary: "Retrieve a category by Id"
       description: "Fetches a specific category by its Id."
       operationId: "findCategoryById"
+      x-google-backend:
+        address: https://catalog-service-878993805464.europe-west4.run.app
       parameters:
         - name: "id"
           in: "path"
@@ -243,6 +263,8 @@ paths:
       summary: "Retrieve all customers"
       description: "Fetches a list of all customers."
       operationId: "findAllCustomers"
+      x-google-backend:
+        address: https://customer-service-878993805464.europe-west4.run.app
       responses:
         "200":
           description: "Ok"
@@ -258,6 +280,8 @@ paths:
       summary: "Create a new customer"
       description: "Creates a new customer and returns the created customer along with its URI."
       operationId: "createCustomer"
+      x-google-backend:
+        address: https://customer-service-878993805464.europe-west4.run.app
       consumes:
         - "application/json"
       parameters:
@@ -285,6 +309,8 @@ paths:
       summary: "Generate customer data"
       description: "Generates and inserts a specified number of random customers into the database."
       operationId: "generateCustomerData"
+      x-google-backend:
+        address: https://customer-service-878993805464.europe-west4.run.app
       parameters:
         - name: "count"
           in: "query"
@@ -310,6 +336,8 @@ paths:
       summary: "Retrieve a customer by Id"
       description: "Fetches a specific customer by its Id."
       operationId: "findCustomerById"
+      x-google-backend:
+        address: https://customer-service-878993805464.europe-west4.run.app
       parameters:
         - name: "id"
           in: "path"
@@ -333,6 +361,8 @@ paths:
       summary: "Generate inventory data"
       description: "Generates and inserts inventory data for all products across all locations in the database."
       operationId: "generateInventoryData"
+      x-google-backend:
+        address: https://inventory-mgmt-service-878993805464.europe-west4.run.app
       produces:
         - "text/plain"
       responses:
@@ -350,6 +380,9 @@ paths:
         - "Optimization"
       summary: "Retrieve Optimization Configuration"
       description: "Fetches the configuration currently used by the optimization service to run the genetic algorithm."
+      operationId: "getOptimizationConfig"
+      x-google-backend:
+        address: https://inventory-opt-service-878993805464.europe-west4.run.app
       responses:
         "200":
           description: "Ok"
@@ -362,6 +395,9 @@ paths:
         - "Optimization"
       summary: "Update Optimization Configuration"
       description: "Makes changes to the configuration currently being used by the optimization service."
+      operationId: "updateOptimizationConfig"
+      x-google-backend:
+        address: https://inventory-opt-service-878993805464.europe-west4.run.app
       parameters:
         - in: "body"
           name: "config"
@@ -373,6 +409,22 @@ paths:
           description: "No content"
         "400":
           description: "Bad Request. Optimization config is missing or invalid."
+  /optimize:
+    post:
+      tags:
+        - "Optimization"
+      summary: "Trigger optimization"
+      operationId: "processOptimizationRequest"
+      description: "Starts the process of inventory optimization."
+      x-google-backend:
+        address: https://inventory-opt-service-878993805464.europe-west4.run.app
+      responses:
+        "202":
+          description: "Accepted"
+          schema:
+            type: string
+        "400":
+          description: "Bad Request."
   /orders:
     get:
       tags:
@@ -380,6 +432,8 @@ paths:
       summary: "Retrieve all orders"
       description: "Fetches all orders in the system."
       operationId: "findAllOrders"
+      x-google-backend:
+        address: https://order-service-878993805464.europe-west4.run.app
       produces:
         - "application/json"
       responses:
@@ -395,6 +449,8 @@ paths:
       summary: "Create a new order"
       description: "Creates a new order with associated order details."
       operationId: "createOrder"
+      x-google-backend:
+        address: https://order-service-878993805464.europe-west4.run.app
       consumes:
         - "application/json"
       produces:
@@ -422,6 +478,8 @@ paths:
       summary: "Retrieve an order by Id"
       description: "Fetches the details of a specific order by its Id."
       operationId: "findOrderById"
+      x-google-backend:
+        address: https://order-service-878993805464.europe-west4.run.app
       produces:
         - "application/json"
       parameters:
