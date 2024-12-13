@@ -52,6 +52,9 @@ public class InventoryServiceImpl implements IInventoryService {
     private MessageProcessingControl processingControl;
 
 
+    /**
+     * Process stock update message receive via PubSub pull subscription
+     */
     @Override
     public void handleIncomingTargetStockUpdateMessage(String message) {
         if (processingControl.isProcessingEnabled()) {
@@ -82,20 +85,7 @@ public class InventoryServiceImpl implements IInventoryService {
             InventoryTargetStockUpdateDTO recvInv = objectMapper.readValue(message,
                     InventoryTargetStockUpdateDTO.class);
 
-            inventoryRepository.findByProductIdAndLocationId(recvInv.getProductId(), recvInv.getLocationId())
-                    .ifPresentOrElse(oldInv -> {
-                        if (recvInv.getOrderedQuantity() > LARGE_ORDER_THRESHOLD) {
-                            createAndSendStockAlert(recvInv, "Large Order");
-                        }
-
-                        double newTargetStock = oldInv.getTargetStock() + recvInv.getOrderedQuantity();
-                        if (oldInv.getCurrentStock()/newTargetStock < STOCK_LOW_THRESHOLD)
-                            createAndSendStockAlert(recvInv, "Stock Low");
-
-                        updateTargetStock(recvInv);
-
-                    }, () -> log.warn("Inventory not found for productId: {} and locationId: {}",
-                            recvInv.getProductId(), recvInv.getLocationId()));
+            handleAlerting(recvInv);
         } catch (JsonProcessingException e) {
             log.error("Failed to parse target stock update message: {}", e.getMessage());
         } catch (Exception e) {
@@ -166,6 +156,10 @@ public class InventoryServiceImpl implements IInventoryService {
         log.info("Processing of messages resumed.");
     }
 
+    /**
+     * Processes optimization message received via PubSub push subscription
+     *
+     */
     @Override
     public ResponseEntity<?> processOptimizationFinishedNotification(String payload) {
         if (payload != null) {
@@ -182,6 +176,10 @@ public class InventoryServiceImpl implements IInventoryService {
         }
     }
 
+    /**
+     * Processes stock update message received via PubSub push subscription
+     *
+     */
     @Override
     public ResponseEntity<?> processStockUpdateMessage(String payload) {
         if (payload != null) {
@@ -191,15 +189,15 @@ public class InventoryServiceImpl implements IInventoryService {
             InventoryTargetStockUpdateDTO updateDTO = parseStockUpdateMessage(payload);
 
             if (updateDTO != null) {
-                updateTargetStock(updateDTO);
+                // Check if any alerts have to be triggered
+                handleAlerting(updateDTO);
                 return ResponseEntity.accepted().build();
             }
             else {
-                ResponseEntity.badRequest().build();
+                return ResponseEntity.badRequest().build();
             }
         }
-
-        return ResponseEntity.badRequest().build();
+        return ResponseEntity.badRequest().body("Stock update message body was missing!");
     }
 
     private InventoryTargetStockUpdateDTO parseStockUpdateMessage(String message) {
@@ -222,6 +220,23 @@ public class InventoryServiceImpl implements IInventoryService {
     private boolean isStockUpdateMessageValid(JsonNode jsonNode) {
         return jsonNode.has("productId") && jsonNode.has("locationId")
                 && jsonNode.has("quantity");
+    }
+
+    private void handleAlerting(InventoryTargetStockUpdateDTO updateDTO) {
+        inventoryRepository.findByProductIdAndLocationId(updateDTO.getProductId(), updateDTO.getLocationId())
+                .ifPresentOrElse(oldInv -> {
+                    if (updateDTO.getOrderedQuantity() > LARGE_ORDER_THRESHOLD) {
+                        createAndSendStockAlert(updateDTO, "Large Order");
+                    }
+
+                    double newTargetStock = oldInv.getTargetStock() + updateDTO.getOrderedQuantity();
+                    if (oldInv.getCurrentStock()/newTargetStock < STOCK_LOW_THRESHOLD)
+                        createAndSendStockAlert(updateDTO, "Stock Low");
+
+                    updateTargetStock(updateDTO);
+
+                }, () -> log.warn("Inventory not found for productId: {} and locationId: {}",
+                        updateDTO.getProductId(), updateDTO.getLocationId()));
     }
 
     private void logUpdatedRows(int rowsUpdated) {
