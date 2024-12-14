@@ -68,6 +68,9 @@ public class InventoryServiceImpl implements IInventoryService {
         }
     }
 
+    /**
+     * Processes optimization request receives via PubSub push subscription
+     */
     @Override
     public ResponseEntity<?> processOptimizationRequest(String payload) {
         if (payload != null) {

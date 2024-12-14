@@ -12,7 +12,6 @@ import java.time.LocalDateTime;
 
 @CrossOrigin("*")
 @RestController
-@RequestMapping("/alerts")
 public class AlertController {
 
     @Autowired

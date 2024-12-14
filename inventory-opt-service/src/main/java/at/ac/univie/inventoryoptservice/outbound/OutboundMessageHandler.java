@@ -36,7 +36,7 @@ public class OutboundMessageHandler {
      *
      */
     public void createAndSendOptimizationFinishedMessage() {
-        String messageContent = "";
+        String messageContent = "optimization finished";
         messagingGateway.sendToPubSub(messageContent, pubSubConfiguration.getOptFinishedTopic());
         log.info("Sent optimization finished message!");
     }
