@@ -22,11 +22,11 @@ public class OutboundConfiguration {
     @Bean
     @ServiceActivator(inputChannel = "pubsubOutputChannel")
     public MessageHandler messageSender(PubSubTemplate pubsubTemplate) {
-        PubSubMessageHandler adapter = new PubSubMessageHandler(pubsubTemplate, pubSubConfiguration.getStockUpdateTopic());
+        PubSubMessageHandler adapter = new PubSubMessageHandler(pubsubTemplate, pubSubConfiguration.getOptFinishedTopic());
 
         adapter.setSuccessCallback(
                 ((ackId, message) ->
-                        log.debug("Message was sent to {}!", pubSubConfiguration.getStockUpdateTopic())));
+                        log.debug("Message was sent to {}!", pubSubConfiguration.getOptFinishedTopic())));
 
         adapter.setFailureCallback(
                 (cause, message) -> log.warn("Error sending {} due to {}", message, cause));

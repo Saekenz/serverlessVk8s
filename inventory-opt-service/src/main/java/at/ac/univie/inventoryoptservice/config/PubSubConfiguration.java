@@ -10,7 +10,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @AllArgsConstructor
 @NoArgsConstructor
 public class PubSubConfiguration {
-    private String stockUpdateTopic;
     private String optFinishedTopic;
     private String subscription;
 }

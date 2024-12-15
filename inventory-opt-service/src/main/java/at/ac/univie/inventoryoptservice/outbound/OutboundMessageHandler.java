@@ -15,23 +15,6 @@ public class OutboundMessageHandler {
     private final PubSubConfiguration pubSubConfiguration;
 
     /**
-     * Sends stock optimization messages to a PubSub topic via a messaging gateway.
-     *
-     * @param stockOptimizationMessages A {@link List} of {@link String} objects representing stock optimization
-     *                                  messages.
-     */
-    public void sendStockOptimizationMessages(List<String> stockOptimizationMessages) {
-        if (!stockOptimizationMessages.contains("")) {
-            int counter = 0;
-            for (String stockOptimizationMessage : stockOptimizationMessages) {
-                counter++;
-                messagingGateway.sendToPubSub(stockOptimizationMessage, pubSubConfiguration.getStockUpdateTopic());
-            }
-            log.info("Stock optimization messages sent: {}", counter);
-        }
-    }
-
-    /**
      * Creates a message with an empty body that is sent to the {@code inv-opt-finished} PubSub topic.
      *
      */
