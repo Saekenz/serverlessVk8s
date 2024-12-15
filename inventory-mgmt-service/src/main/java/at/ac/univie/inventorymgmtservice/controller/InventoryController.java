@@ -35,7 +35,7 @@ public class InventoryController {
         messagingGateway.sendToPubSub(message, pubSubConfiguration.getAlertTopic());
     }
 
-    @PostMapping("/inventories/generate")
+    @PostMapping("/generate")
     public ResponseEntity<?> generateInventories() {
         return inventoryService.generateInventoryData();
     }
@@ -45,7 +45,7 @@ public class InventoryController {
         return inventoryService.processOptimizationFinishedNotification(payload);
     }
 
-    @PostMapping("/inventories/update-stock")
+    @PostMapping("/update-stock")
     public ResponseEntity<?> processStockUpdateMessage(@RequestBody String payload) {
         return inventoryService.processStockUpdateMessage(payload);
     }
