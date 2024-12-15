@@ -17,7 +17,7 @@ steps:
             '--platform', 'managed',
             '--allow-unauthenticated',
             '--service-account', '878993805464-compute@developer.gserviceaccount.com',
-            '--set-env-vars', 'MUTATION_RATE=0.01,POPULATION_SIZE=60,GENERATIONS=300,OPT_SUB=inv-optimization-sub,OPT_FINISHED_TOPIC=inv-opt-finished',
+            '--set-env-vars', 'MUTATION_RATE=0.01,POPULATION_SIZE=60,GENERATIONS=300,OPT_FINISHED_TOPIC=inv-opt-finished',
             '--update-secrets', 'DATABASE_HOST=db_host:latest',
             '--update-secrets', 'DATABASE_USER=db_user:latest',
             '--update-secrets', 'DATABASE_PASSWORD=db_password:latest']
