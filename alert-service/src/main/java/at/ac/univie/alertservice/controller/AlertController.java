@@ -17,14 +17,9 @@ public class AlertController {
     @Autowired
     private IAlertService alertService;
 
-    @GetMapping("/{id}")
+    @GetMapping({"alerts/{id}", "/{id}"})
     public ResponseEntity<?> findAlertById(@PathVariable Long id) {
         return alertService.findById(id);
-    }
-
-    @PostMapping("/test")
-    public ResponseEntity<?> createAlert(@RequestBody Alert alert) {
-        return alertService.save(alert);
     }
 
     @PostMapping()
@@ -32,7 +27,7 @@ public class AlertController {
         return alertService.saveAlert(payload, request);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping({"alerts/{id}", "/{id}"})
     public ResponseEntity<?> deleteAlert(@PathVariable Long id) {
         return alertService.delete(id);
     }

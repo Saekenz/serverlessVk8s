@@ -86,7 +86,7 @@ public class AlertServiceImpl implements IAlertService {
             Alert alert = objectMapper.readValue(payload, Alert.class);
             Alert createdAlert = alertRepository.save(alert);
 
-            URI locationUri = new URI(request.getRequestURL().toString() + "/" + createdAlert.getId());
+            URI locationUri = new URI(request.getRequestURL().toString() + createdAlert.getId());
 
             return ResponseEntity.created(locationUri)
                     .body(modelMapper.map(createdAlert, AlertDTO.class));
