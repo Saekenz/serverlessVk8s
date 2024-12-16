@@ -42,7 +42,7 @@ public class CustomerController {
      * @param customerDTO Data object containing the updated information.
      * @return Response message containing the status of the update.
      */
-    @PutMapping("/{id}")
+    @PutMapping({"customers/{id}", "/{id}"})
     public ResponseEntity<?> updateCustomer(@PathVariable Long id, @RequestBody CustomerDTO customerDTO) {
         return customerService.update(id, customerDTO);
     }
@@ -53,7 +53,7 @@ public class CustomerController {
      * @param id Unique identifier associated with the customer.
      * @return Response message with the customer data.
      */
-    @GetMapping("/{id}")
+    @GetMapping({"customers/{id}", "/{id}"})
     public ResponseEntity<?> findCustomerById(@PathVariable Long id) {
         return customerService.findById(id);
     }
