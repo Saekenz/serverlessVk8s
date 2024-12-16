@@ -2,7 +2,7 @@ swagger: "2.0"
 info:
   title: ecommerce
   description: Ecommerce API for handling orders
-  version: 1.0.0
+  version: 2.0.0
 host: ecommerce.apigateway.serverless-k8s-study.cloud.goog
 schemes:
   - https
@@ -30,6 +30,7 @@ paths:
       operationId: "findAlertsByDateRange"
       x-google-backend:
         address: https://alert-service-878993805464.europe-west4.run.app
+        deadline: 30.0
       parameters:
         - name: "from"
           in: "query"
@@ -54,6 +55,7 @@ paths:
       operationId: "createAlert"
       x-google-backend:
         address: https://alert-service-878993805464.europe-west4.run.app
+        deadline: 30.0
       consumes:
         - "application/json"
       produces:
@@ -81,6 +83,8 @@ paths:
       operationId: "findAlertById"
       x-google-backend:
         address: https://alert-service-878993805464.europe-west4.run.app
+        path_translation: APPEND_PATH_TO_ADDRESS
+        deadline: 30.0
       parameters:
         - name: "id"
           in: "path"
@@ -104,6 +108,8 @@ paths:
       operationId: "deleteAlert"
       x-google-backend:
         address: https://alert-service-878993805464.europe-west4.run.app
+        path_translation: APPEND_PATH_TO_ADDRESS
+        deadline: 30.0
       parameters:
         - name: "id"
           in: "path"
@@ -126,6 +132,8 @@ paths:
       operationId: "findAllProducts"
       x-google-backend:
         address: https://catalog-service-878993805464.europe-west4.run.app
+        path_translation: APPEND_PATH_TO_ADDRESS
+        deadline: 30.0
       responses:
         "200":
           description: "Ok"
@@ -143,6 +151,8 @@ paths:
       operationId: "createProduct"
       x-google-backend:
         address: https://catalog-service-878993805464.europe-west4.run.app
+        path_translation: APPEND_PATH_TO_ADDRESS
+        deadline: 30.0
       consumes:
         - "application/json"
       parameters:
@@ -172,6 +182,8 @@ paths:
       operationId: "generateProductData"
       x-google-backend:
         address: https://catalog-service-878993805464.europe-west4.run.app
+        path_translation: APPEND_PATH_TO_ADDRESS
+        deadline: 30.0
       produces:
         - "text/plain"
       parameters:
@@ -197,11 +209,14 @@ paths:
       operationId: "findProductById"
       x-google-backend:
         address: https://catalog-service-878993805464.europe-west4.run.app
+        path_translation: APPEND_PATH_TO_ADDRESS
+        deadline: 30.0
       parameters:
         - name: "id"
           in: "path"
           description: "Id of the product to retrieve"
           required: true
+          minimum: 1
           type: "integer"
           format: "int64"
       responses:
@@ -222,6 +237,8 @@ paths:
       operationId: "findAllCategories"
       x-google-backend:
         address: https://catalog-service-878993805464.europe-west4.run.app
+        path_translation: APPEND_PATH_TO_ADDRESS
+        deadline: 30.0
       responses:
         "200":
           description: "Ok"
@@ -240,6 +257,8 @@ paths:
       operationId: "findCategoryById"
       x-google-backend:
         address: https://catalog-service-878993805464.europe-west4.run.app
+        path_translation: APPEND_PATH_TO_ADDRESS
+        deadline: 30.0
       parameters:
         - name: "id"
           in: "path"
@@ -265,6 +284,7 @@ paths:
       operationId: "findAllCustomers"
       x-google-backend:
         address: https://customer-service-878993805464.europe-west4.run.app
+        deadline: 30.0
       responses:
         "200":
           description: "Ok"
@@ -282,6 +302,7 @@ paths:
       operationId: "createCustomer"
       x-google-backend:
         address: https://customer-service-878993805464.europe-west4.run.app
+        deadline: 30.0
       consumes:
         - "application/json"
       parameters:
@@ -310,7 +331,8 @@ paths:
       description: "Generates and inserts a specified number of random customers into the database."
       operationId: "generateCustomerData"
       x-google-backend:
-        address: https://customer-service-878993805464.europe-west4.run.app
+        address: https://customer-service-878993805464.europe-west4.run.app/generate
+        deadline: 30.0
       parameters:
         - name: "count"
           in: "query"
@@ -338,6 +360,8 @@ paths:
       operationId: "findCustomerById"
       x-google-backend:
         address: https://customer-service-878993805464.europe-west4.run.app
+        path_translation: APPEND_PATH_TO_ADDRESS
+        deadline: 30.0
       parameters:
         - name: "id"
           in: "path"
@@ -354,7 +378,7 @@ paths:
           description: "Customer not found"
           schema:
             type: "string"
-  /inventory/generate:
+  /inventories/generate:
     post:
       tags:
         - "Inventories"
@@ -362,7 +386,8 @@ paths:
       description: "Generates and inserts inventory data for all products across all locations in the database."
       operationId: "generateInventoryData"
       x-google-backend:
-        address: https://inventory-mgmt-service-878993805464.europe-west4.run.app
+        address: https://inventory-mgmt-service-878993805464.europe-west4.run.app/generate
+        deadline: 30.0
       produces:
         - "text/plain"
       responses:
@@ -374,7 +399,7 @@ paths:
           description: "Internal server error"
           schema:
             type: "string"
-  /config:
+  /optimizations/config:
     get:
       tags:
         - "Optimization"
@@ -382,7 +407,8 @@ paths:
       description: "Fetches the configuration currently used by the optimization service to run the genetic algorithm."
       operationId: "getOptimizationConfig"
       x-google-backend:
-        address: https://inventory-opt-service-878993805464.europe-west4.run.app
+        address: https://inventory-opt-service-878993805464.europe-west4.run.app/config
+        deadline: 30.0
       responses:
         "200":
           description: "Ok"
@@ -397,7 +423,8 @@ paths:
       description: "Makes changes to the configuration currently being used by the optimization service."
       operationId: "updateOptimizationConfig"
       x-google-backend:
-        address: https://inventory-opt-service-878993805464.europe-west4.run.app
+        address: https://inventory-opt-service-878993805464.europe-west4.run.app/config
+        deadline: 30.0
       parameters:
         - in: "body"
           name: "config"
@@ -409,7 +436,7 @@ paths:
           description: "No content"
         "400":
           description: "Bad Request. Optimization config is missing or invalid."
-  /optimize:
+  /optimizations/optimize:
     post:
       tags:
         - "Optimization"
@@ -417,7 +444,8 @@ paths:
       operationId: "processOptimizationRequest"
       description: "Starts the process of inventory optimization."
       x-google-backend:
-        address: https://inventory-opt-service-878993805464.europe-west4.run.app
+        address: https://inventory-opt-service-878993805464.europe-west4.run.app/optimize
+        deadline: 30.0
       responses:
         "202":
           description: "Accepted"
@@ -434,6 +462,7 @@ paths:
       operationId: "findAllOrders"
       x-google-backend:
         address: https://order-service-878993805464.europe-west4.run.app
+        deadline: 30.0
       produces:
         - "application/json"
       responses:
@@ -451,6 +480,7 @@ paths:
       operationId: "createOrder"
       x-google-backend:
         address: https://order-service-878993805464.europe-west4.run.app
+        deadline: 30.0
       consumes:
         - "application/json"
       produces:
@@ -480,6 +510,8 @@ paths:
       operationId: "findOrderById"
       x-google-backend:
         address: https://order-service-878993805464.europe-west4.run.app
+        path_translation: APPEND_PATH_TO_ADDRESS
+        deadline: 30.0
       produces:
         - "application/json"
       parameters:
