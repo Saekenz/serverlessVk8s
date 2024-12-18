@@ -5,6 +5,7 @@ import at.ac.univie.inventoryoptservice.dto.InventoryAllocationDTO;
 import at.ac.univie.inventoryoptservice.dto.StockOptimizationDTO;
 import at.ac.univie.inventoryoptservice.optimization.*;
 import at.ac.univie.inventoryoptservice.outbound.OutboundMessageHandler;
+import at.ac.univie.inventoryoptservice.repository.ConfigurationRepository;
 import at.ac.univie.inventoryoptservice.repository.InventoryRepository;
 import at.ac.univie.inventoryoptservice.util.OptimizationMessageBuilder;
 import at.ac.univie.inventoryoptservice.util.OptimizationMessageParser;
@@ -15,12 +16,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Objects;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class InventoryServiceImpl implements IInventoryService {
+    private static final String MUTATION_RATE = "inv.opt.ga.mutationRate";
+    private static final String POPULATION_SIZE = "inv.opt.ga.populationSize";
+    private static final String GENERATIONS = "inv.opt.ga.generations";
+
     private final OptimizationMessageBuilder optimizationMessageBuilder;
     private final OptimizationMessageParser optimizationMessageParser;
     private final GeneticAlgorithm geneticAlgorithm;
@@ -28,6 +32,9 @@ public class InventoryServiceImpl implements IInventoryService {
 
     @Autowired
     private InventoryRepository inventoryRepository;
+
+    @Autowired
+    private ConfigurationRepository configRepository;
 
     @Autowired
     private OptimizationConfig optimizationConfig;
@@ -46,7 +53,23 @@ public class InventoryServiceImpl implements IInventoryService {
      */
     @Override
     public ResponseEntity<?> getOptimizationConfig() {
+        loadOptimizationConfig();
         return ResponseEntity.ok(optimizationConfig);
+    }
+
+    private void loadOptimizationConfig() {
+        configRepository.findByNameStartingWith("inv.opt.ga").forEach(configEntry -> {
+            switch (configEntry.getName()) {
+                case MUTATION_RATE -> optimizationConfig
+                        .setMutationRate(Double.parseDouble(configEntry.getValue()));
+                case POPULATION_SIZE -> optimizationConfig
+                        .setPopulationSize(Integer.parseInt(configEntry.getValue()));
+                case GENERATIONS -> optimizationConfig
+                        .setGenerations(Integer.parseInt(configEntry.getValue()));
+                default -> log.error("Unknown optimization configuration found while loading from database: {}",
+                        configEntry.getName());
+            }
+        });
     }
 
     /**
@@ -59,13 +82,28 @@ public class InventoryServiceImpl implements IInventoryService {
     @Override
     public ResponseEntity<?> updateOptimizationConfig(OptimizationConfig config) {
         if (config != null) {
+
+            // save new config to database
+            storeOptimizationConfig(config);
+
+            // update current config to new config
             optimizationConfig.setConfig(config);
+
             log.info("Optimization config updated: {}", optimizationConfig.toString());
             return ResponseEntity.noContent().build();
         }
         else {
             return ResponseEntity.badRequest().body("Optimization config is missing parameters!");
         }
+    }
+
+    private void storeOptimizationConfig(OptimizationConfig config) {
+        configRepository.updateConfigEntryValueByName(MUTATION_RATE,
+                String.valueOf(config.getMutationRate()));
+        configRepository.updateConfigEntryValueByName(POPULATION_SIZE,
+                String.valueOf(config.getPopulationSize()));
+        configRepository.updateConfigEntryValueByName(GENERATIONS,
+                String.valueOf(config.getGenerations()));
     }
 
     /**
@@ -76,7 +114,7 @@ public class InventoryServiceImpl implements IInventoryService {
         if (payload != null) {
             log.info("Received optimization request: {}", payload);
 
-            // Handle the optimization asynchronously
+            // Handle the optimization
             handleIncomingOptimizationMessage(payload);
 
             // Acknowledge the message
@@ -90,9 +128,13 @@ public class InventoryServiceImpl implements IInventoryService {
     @Override
     public void handleIncomingOptimizationMessage(String message) {
         // optionally retrieve optimization configuration from incoming message
-        OptimizationConfig config = Objects.requireNonNullElse(
-                optimizationMessageParser.parseOptimizationMessage(message),
-                optimizationConfig);
+        OptimizationConfig config = optimizationMessageParser.parseOptimizationMessage(message);
+
+        // if no config is passed with the message fetch the latest config from the database
+        if (config == null) {
+            loadOptimizationConfig();
+            config = optimizationConfig;
+        }
 
         // start timer to measure genetic algorithm runtime
         long startTime = System.nanoTime();
