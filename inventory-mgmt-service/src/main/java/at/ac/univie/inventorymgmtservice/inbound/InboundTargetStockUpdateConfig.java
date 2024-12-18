@@ -58,7 +58,7 @@ public class InboundTargetStockUpdateConfig {
     public void messageReceiver(
             String payload,
             @Header(GcpPubSubHeaders.ORIGINAL_MESSAGE) BasicAcknowledgeablePubsubMessage message) {
-        log.debug("Message arrived! Payload: {}", payload);
+        log.debug("Message arrived from {}! Payload: {}", pubSubConfiguration.getTargetStockSub(), payload);
         inventoryService.handleIncomingTargetStockUpdateMessage(payload);
         messageCounter.incrementAndGet();
         message.ack();

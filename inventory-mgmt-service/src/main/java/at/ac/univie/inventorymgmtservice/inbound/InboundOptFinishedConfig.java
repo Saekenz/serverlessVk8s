@@ -48,7 +48,7 @@ public class InboundOptFinishedConfig {
     public void messageReceiver(
             String payload,
             @Header(GcpPubSubHeaders.ORIGINAL_MESSAGE) BasicAcknowledgeablePubsubMessage message) {
-        log.info("Message arrived! Payload: {}", payload);
+        log.info("Message arrived from {}! Payload: {}", pubSubConfiguration.getOptFinishedSub(), payload);
         inventoryService.resumeMessageProcessing();
         message.ack();
     }
