@@ -1,6 +1,8 @@
 package at.ac.univie.inventorymgmtservice.service;
 
 import at.ac.univie.inventorymgmtservice.config.PubSubConfiguration;
+import at.ac.univie.inventorymgmtservice.dto.InventoryTargetStockUpdateDTO;
+import at.ac.univie.inventorymgmtservice.dto.StockAlertDTO;
 import at.ac.univie.inventorymgmtservice.model.*;
 import at.ac.univie.inventorymgmtservice.outbound.OutboundConfiguration;
 import at.ac.univie.inventorymgmtservice.repository.InventoryRepository;
@@ -90,27 +92,6 @@ public class InventoryServiceImpl implements IInventoryService {
             log.error("Failed to parse target stock update message: {}", e.getMessage());
         } catch (Exception e) {
             log.error("Unexpected error while processing target stock update: {}", e.getMessage());
-        }
-    }
-
-    @Override
-    public void handleIncomingCurrentStockUpdateMessage(String message) {
-        try {
-            InventoryCurrentStockUpdateDTO recvInv = objectMapper.readValue(message,
-                    InventoryCurrentStockUpdateDTO.class);
-
-            int updatedRows = inventoryRepository.updateCurrentStock(recvInv.getProductId(), recvInv.getLocationId(),
-                    recvInv.getNewCurrentStock());
-
-            logUpdatedRows(updatedRows);
-            if (updatedRows < 1) {
-                log.error("Error updating current stock for inventory with productId: {} and locationId: {}",
-                        recvInv.getProductId(), recvInv.getLocationId());
-            }
-        } catch (JsonProcessingException e) {
-            log.error("Failed to parse inventory optimization message: {}", e.getMessage());
-        } catch (Exception e) {
-            log.error("Unexpected error while processing inventory optimization: {}", e.getMessage());
         }
     }
 

@@ -1,4 +1,4 @@
-package at.ac.univie.inventorymgmtservice.model;
+package at.ac.univie.inventorymgmtservice.dto;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import lombok.AllArgsConstructor;

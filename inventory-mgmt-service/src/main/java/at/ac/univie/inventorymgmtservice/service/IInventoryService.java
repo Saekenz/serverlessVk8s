@@ -7,8 +7,6 @@ public interface IInventoryService {
 
     void handleIncomingTargetStockUpdateMessage(String message);
 
-    void handleIncomingCurrentStockUpdateMessage(String message);
-
     ResponseEntity<?> generateInventoryData();
 
     void handleOutgoingOptimizationMessage();
