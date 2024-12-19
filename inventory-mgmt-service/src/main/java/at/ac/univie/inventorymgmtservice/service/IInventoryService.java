@@ -5,7 +5,7 @@ import org.springframework.scheduling.annotation.Async;
 
 public interface IInventoryService {
 
-    void handleIncomingTargetStockUpdateMessage(String message);
+    boolean handleTargetStockUpdateFromPullSubscription(String message);
 
     ResponseEntity<?> generateInventoryData();
 
@@ -16,5 +16,5 @@ public interface IInventoryService {
 
     ResponseEntity<?> processOptimizationFinishedNotification(String payload);
 
-    ResponseEntity<?> processStockUpdateMessage(String payload);
+    ResponseEntity<?> handleTargetStockUpdateFromPushSubscription(String payload);
 }

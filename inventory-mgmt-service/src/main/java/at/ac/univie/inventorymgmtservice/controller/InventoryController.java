@@ -47,6 +47,6 @@ public class InventoryController {
 
     @PostMapping("/update-stock")
     public ResponseEntity<?> processStockUpdateMessage(@RequestBody String payload) {
-        return inventoryService.processStockUpdateMessage(payload);
+        return inventoryService.handleTargetStockUpdateFromPushSubscription(payload);
     }
 }

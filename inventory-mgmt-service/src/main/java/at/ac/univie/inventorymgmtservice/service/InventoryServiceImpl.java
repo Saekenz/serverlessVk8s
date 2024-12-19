@@ -21,8 +21,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 
 @Service
 @Slf4j
@@ -32,8 +30,6 @@ public class InventoryServiceImpl implements IInventoryService {
     private static final double STOCK_LOW_THRESHOLD = 0.3;
 
     private final OutboundConfiguration.PubSubOutboundGateway messagingGateway;
-
-    private final BlockingQueue<String> messageQueue = new LinkedBlockingQueue<>();
 
     @Autowired
     private InventoryRepository inventoryRepository;
@@ -53,46 +49,96 @@ public class InventoryServiceImpl implements IInventoryService {
     @Autowired
     private MessageProcessingControl processingControl;
 
+    /**
+     * Processes an incoming target stock update message and persists the information contained within to
+     * the database.
+     *
+     * @param message The information that is to be used to facilitate the update.
+     * @return {@code true} if processing was successful, {@code false} otherwise
+     */
+    private boolean processAndPersistTargetStockUpdate(String message) {
+        log.info("Received stock update notification: {}", message);
+
+        // Parse the message
+        InventoryTargetStockUpdateDTO updateDTO = parseStockUpdateMessage(message);
+
+        if (updateDTO != null) {
+            // Check if any alerts have to be triggered
+            handleAlerting(updateDTO);
+
+            // Update the database
+            updateTargetStock(updateDTO);
+            return true;
+        }
+        return false;
+    }
 
     /**
      * Process stock update message receive via PubSub pull subscription
+     *
+     * @return {@code true} if processing is enabled and was successful, {@code false} otherwise
      */
     @Override
-    public void handleIncomingTargetStockUpdateMessage(String message) {
+    public boolean handleTargetStockUpdateFromPullSubscription(String message) {
         if (processingControl.isProcessingEnabled()) {
-            processTargetStockUpdateMessage(message);
+            return processAndPersistTargetStockUpdate(message);
         }
         else {
-            // if processing is currently paused add message to queue
-            boolean isOfferSuccess = messageQueue.offer(message);
-            if (!isOfferSuccess) {
-                log.warn("Failed adding incoming message to queue!");
+            log.info("Received target stock update message but message processing is currently paused!");
+            return false;
+        }
+    }
+
+    /**
+     * Processes stock update message received via PubSub push subscription
+     *
+     * @return {@link ResponseEntity} containing:
+     *         <ul>
+     *             <li>HTTP code {@code 202} if processing is currently enabled and was successful</li>
+     *             <li>HTTP code {@code 503} if processing is currently not enabled</li>
+     *             <li>HTTP code {@code 400} if the message was malformed</li>
+     *         </ul>
+     */
+    @Override
+    public ResponseEntity<?> handleTargetStockUpdateFromPushSubscription(String payload) {
+        if (processingControl.isProcessingEnabled()) {
+            boolean isUpdateSuccessful = processAndPersistTargetStockUpdate(payload);
+
+            if(isUpdateSuccessful) {
+                return ResponseEntity.accepted().build();
             }
-
-            log.info("Processing messages paused. Messages currently queued: {}", messageQueue.size());
+            else {
+                return ResponseEntity.badRequest().body("The message could not be processed, because it does not " +
+                        "conform to the required schema!");
+            }
         }
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("Message processing for this service is " +
+                "temporarily unavailable!");
     }
 
-    private void processQueuedMessages() {
-        int messagesQueued = messageQueue.size();
-        while (!messageQueue.isEmpty()) {
-            String message = messageQueue.poll();
-            processTargetStockUpdateMessage(message);
-        }
-        log.info("Queued messages processed: {}", messagesQueued);
-    }
-
-    private void processTargetStockUpdateMessage(String message) {
+    private InventoryTargetStockUpdateDTO parseStockUpdateMessage(String message) {
         try {
-            InventoryTargetStockUpdateDTO recvInv = objectMapper.readValue(message,
-                    InventoryTargetStockUpdateDTO.class);
+            JsonNode jsonNode = objectMapper.readTree(message);
 
-            handleAlerting(recvInv);
+            if (isStockUpdateMessageValid(jsonNode)) {
+                return objectMapper.treeToValue(jsonNode, InventoryTargetStockUpdateDTO.class);
+            }
+            else {
+                log.warn("Incoming stock update message does not adhere to the required schema!");
+                return null;
+            }
         } catch (JsonProcessingException e) {
-            log.error("Failed to parse target stock update message: {}", e.getMessage());
-        } catch (Exception e) {
-            log.error("Unexpected error while processing target stock update: {}", e.getMessage());
+            log.error(e.getMessage());
+            return null;
+        } catch (NullPointerException e) {
+            log.error("Error while parsing message: Message was null!");
+            return null;
         }
+    }
+
+    private boolean isStockUpdateMessageValid(JsonNode jsonNode) {
+        return jsonNode.has("productId") && jsonNode.has("locationId")
+                && jsonNode.has("quantity");
     }
 
     @Override
@@ -132,7 +178,6 @@ public class InventoryServiceImpl implements IInventoryService {
 
     @Override
     public void resumeMessageProcessing() {
-        processQueuedMessages();
         processingControl.resumeProcessing();
         log.info("Processing of messages resumed.");
     }
@@ -157,52 +202,6 @@ public class InventoryServiceImpl implements IInventoryService {
         }
     }
 
-    /**
-     * Processes stock update message received via PubSub push subscription
-     *
-     */
-    @Override
-    public ResponseEntity<?> processStockUpdateMessage(String payload) {
-        if (payload != null) {
-            log.info("Received stock update notification: {}", payload);
-
-            // Parse the message
-            InventoryTargetStockUpdateDTO updateDTO = parseStockUpdateMessage(payload);
-
-            if (updateDTO != null) {
-                // Check if any alerts have to be triggered
-                handleAlerting(updateDTO);
-                return ResponseEntity.accepted().build();
-            }
-            else {
-                return ResponseEntity.badRequest().build();
-            }
-        }
-        return ResponseEntity.badRequest().body("Stock update message body was missing!");
-    }
-
-    private InventoryTargetStockUpdateDTO parseStockUpdateMessage(String message) {
-        try {
-            JsonNode jsonNode = objectMapper.readTree(message);
-
-            if (isStockUpdateMessageValid(jsonNode)) {
-                return objectMapper.treeToValue(jsonNode, InventoryTargetStockUpdateDTO.class);
-            }
-            else {
-                log.warn("Incoming stock update message does not adhere to the required schema!");
-                return null;
-            }
-        } catch (JsonProcessingException e) {
-            log.error(e.getMessage());
-            return null;
-        }
-    }
-
-    private boolean isStockUpdateMessageValid(JsonNode jsonNode) {
-        return jsonNode.has("productId") && jsonNode.has("locationId")
-                && jsonNode.has("quantity");
-    }
-
     private void handleAlerting(InventoryTargetStockUpdateDTO updateDTO) {
         inventoryRepository.findByProductIdAndLocationId(updateDTO.getProductId(), updateDTO.getLocationId())
                 .ifPresentOrElse(oldInv -> {
@@ -214,14 +213,8 @@ public class InventoryServiceImpl implements IInventoryService {
                     if (oldInv.getCurrentStock()/newTargetStock < STOCK_LOW_THRESHOLD)
                         createAndSendStockAlert(updateDTO, "Stock Low");
 
-                    updateTargetStock(updateDTO);
-
                 }, () -> log.warn("Inventory not found for productId: {} and locationId: {}",
                         updateDTO.getProductId(), updateDTO.getLocationId()));
-    }
-
-    private void logUpdatedRows(int rowsUpdated) {
-        log.debug("Rows updated: {}", rowsUpdated);
     }
 
     private void updateTargetStock(InventoryTargetStockUpdateDTO inv) {
@@ -233,6 +226,10 @@ public class InventoryServiceImpl implements IInventoryService {
             log.error("Error updating target stock for inventory with productId: {} and locationId: {}",
                     inv.getProductId(), inv.getLocationId());
         }
+    }
+
+    private void logUpdatedRows(int rowsUpdated) {
+        log.debug("Rows updated: {}", rowsUpdated);
     }
 
     private void createAndSendStockAlert(InventoryTargetStockUpdateDTO inv, String alertCategory) {

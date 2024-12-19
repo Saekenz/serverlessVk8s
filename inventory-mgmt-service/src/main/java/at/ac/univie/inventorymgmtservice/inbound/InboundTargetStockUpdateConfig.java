@@ -59,9 +59,16 @@ public class InboundTargetStockUpdateConfig {
             String payload,
             @Header(GcpPubSubHeaders.ORIGINAL_MESSAGE) BasicAcknowledgeablePubsubMessage message) {
         log.debug("Message arrived from {}! Payload: {}", pubSubConfiguration.getTargetStockSub(), payload);
-        inventoryService.handleIncomingTargetStockUpdateMessage(payload);
         messageCounter.incrementAndGet();
-        message.ack();
+
+        boolean isUpdateSuccessful = inventoryService.handleTargetStockUpdateFromPullSubscription(payload);
+
+        if (isUpdateSuccessful) {
+            message.ack();
+        }
+        else {
+            message.nack();
+        }
     }
 
     @Scheduled(fixedRate = FIXED_RATE)
