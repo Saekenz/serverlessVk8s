@@ -1,0 +1,76 @@
+apiVersion: "v1"
+kind: "ConfigMap"
+metadata:
+  name: "alert-deployment-config"
+  namespace: "default"
+  labels:
+    app: "alert"
+data:
+  ALERT_SUB: "stock-alert-gke-sub"
+  PORT: "8080"
+---
+apiVersion: "apps/v1"
+kind: "Deployment"
+metadata:
+  name: "alert-deployment"
+  namespace: "default"
+  labels:
+    app: "alert"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: "alert"
+  template:
+    metadata:
+      labels:
+        app: "alert"
+    spec:
+      serviceAccountName: "k8s-service-account"
+      containers:
+      - name: "alert-service"
+        image: "gcr.io/serverless-k8s-study/alert-service"
+        ports:
+          - containerPort: 8080
+        env:
+        - name: "ALERT_SUB"
+          valueFrom:
+            configMapKeyRef:
+              key: "ALERT_SUB"
+              name: "alert-deployment-config"
+        - name: "DATABASE_HOST"
+          valueFrom:
+            secretKeyRef:
+              key: "DATABASE_HOST"
+              name: "db-config-secret"
+        - name: "DATABASE_USER"
+          valueFrom:
+            secretKeyRef:
+              key: "DATABASE_USER"
+              name: "db-config-secret"
+        - name: "DATABASE_PASSWORD"
+          valueFrom:
+            secretKeyRef:
+              key: "DATABASE_PASSWORD"
+              name: "db-config-secret"
+        - name: "PORT"
+          valueFrom:
+            configMapKeyRef:
+              key: "PORT"
+              name: "alert-deployment-config"
+---
+apiVersion: "v1"
+kind: "Service"
+metadata:
+  name: "alert-service"
+  namespace: "default"
+  labels:
+    app: "alert"
+spec:
+  ports:
+  - protocol: "TCP"
+    port: 80
+    targetPort: 8080
+  selector:
+    app: "alert"
+  type: "ClusterIP"

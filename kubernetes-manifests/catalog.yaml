@@ -1,0 +1,70 @@
+apiVersion: "v1"
+kind: "ConfigMap"
+metadata:
+  name: "catalog-deployment-config"
+  namespace: "default"
+  labels:
+    app: "catalog"
+data:
+  PORT: "8080"
+---
+apiVersion: "apps/v1"
+kind: "Deployment"
+metadata:
+  name: "catalog-deployment"
+  namespace: "default"
+  labels:
+    app: "catalog"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: "catalog"
+  template:
+    metadata:
+      labels:
+        app: "catalog"
+    spec:
+      serviceAccountName: "k8s-service-account"
+      containers:
+      - name: "catalog-service"
+        image: "gcr.io/serverless-k8s-study/catalog-service"
+        ports:
+          - containerPort: 8080
+        env:
+        - name: "DATABASE_HOST"
+          valueFrom:
+            secretKeyRef:
+              key: "DATABASE_HOST"
+              name: "db-config-secret"
+        - name: "DATABASE_USER"
+          valueFrom:
+            secretKeyRef:
+              key: "DATABASE_USER"
+              name: "db-config-secret"
+        - name: "DATABASE_PASSWORD"
+          valueFrom:
+            secretKeyRef:
+              key: "DATABASE_PASSWORD"
+              name: "db-config-secret"
+        - name: "PORT"
+          valueFrom:
+            configMapKeyRef:
+              key: "PORT"
+              name: "catalog-deployment-config"
+---
+apiVersion: "v1"
+kind: "Service"
+metadata:
+  name: "catalog-service"
+  namespace: "default"
+  labels:
+    app: "catalog"
+spec:
+  ports:
+  - protocol: "TCP"
+    port: 80
+    targetPort: 8080
+  selector:
+    app: "catalog"
+  type: "ClusterIP"

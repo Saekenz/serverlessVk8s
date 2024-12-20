@@ -1,0 +1,96 @@
+apiVersion: "v1"
+kind: "ConfigMap"
+metadata:
+  name: "inventory-mgmt-deployment-config"
+  namespace: "default"
+  labels:
+    app: "inventory-mgmt"
+data:
+  ALERT_TOPIC: "stock-alert-gke"
+  OPT_START_TOPIC: "inv-optimization-gke"
+  STOCK_SUB: "target-stock-update-gke-sub"
+  OPT_FINISHED_SUB: "inv-opt-finished-gke-sub"
+  PORT: "8080"
+  MESSAGE_THRESHOLD: "10"
+  FIXED_RATE: "5000"
+---
+apiVersion: "apps/v1"
+kind: "Deployment"
+metadata:
+  name: "inventory-mgmt-deployment"
+  namespace: "default"
+  labels:
+    app: "inventory-mgmt"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: "inventory-mgmt"
+  template:
+    metadata:
+      labels:
+        app: "inventory-mgmt"
+    spec:
+      serviceAccountName: "k8s-service-account"
+      containers:
+      - name: "inventory-mgmt-service"
+        image: "gcr.io/serverless-k8s-study/inventory-mgmt-service"
+        ports:
+          - containerPort: 8080
+        env:
+        - name: "ALERT_TOPIC"
+          valueFrom:
+            configMapKeyRef:
+              key: "ALERT_TOPIC"
+              name: "inventory-mgmt-deployment-config"
+        - name: "OPT_START_TOPIC"
+          valueFrom:
+            configMapKeyRef:
+              key: "OPT_START_TOPIC"
+              name: "inventory-mgmt-deployment-config"
+        - name: "STOCK_SUB"
+          valueFrom:
+            configMapKeyRef:
+              key: "STOCK_SUB"
+              name: "inventory-mgmt-deployment-config"
+        - name: "OPT_FINISHED_SUB"
+          valueFrom:
+            configMapKeyRef:
+              key: "OPT_FINISHED_SUB"
+              name: "inventory-mgmt-deployment-config"
+        - name: "DATABASE_HOST"
+          valueFrom:
+            secretKeyRef:
+              key: "DATABASE_HOST"
+              name: "db-config-secret"
+        - name: "DATABASE_USER"
+          valueFrom:
+            secretKeyRef:
+              key: "DATABASE_USER"
+              name: "db-config-secret"
+        - name: "DATABASE_PASSWORD"
+          valueFrom:
+            secretKeyRef:
+              key: "DATABASE_PASSWORD"
+              name: "db-config-secret"
+        - name: "PORT"
+          valueFrom:
+            configMapKeyRef:
+              key: "PORT"
+              name: "inventory-mgmt-deployment-config"
+---
+apiVersion: "v1"
+kind: "Service"
+metadata:
+  name: "inventory-mgmt-service"
+  namespace: "default"
+  labels:
+    app: "inventory-mgmt"
+spec:
+  ports:
+  - protocol: "TCP"
+    port: 80
+    targetPort: 8080
+  selector:
+    app: "inventory-mgmt"
+  type: "ClusterIP"

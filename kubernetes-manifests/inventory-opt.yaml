@@ -1,0 +1,82 @@
+apiVersion: "v1"
+kind: "ConfigMap"
+metadata:
+  name: "inventory-opt-deployment-config"
+  namespace: "default"
+  labels:
+    app: "inventory-opt"
+data:
+  OPT_SUB: "inv-optimization-gke-sub"
+  OPT_FINISHED_TOPIC: "inv-opt-finished-gke"
+  PORT: "8080"
+---
+apiVersion: "apps/v1"
+kind: "Deployment"
+metadata:
+  name: "inventory-opt-deployment"
+  namespace: "default"
+  labels:
+    app: "inventory-opt"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: "inventory-opt"
+  template:
+    metadata:
+      labels:
+        app: "inventory-opt"
+    spec:
+      serviceAccountName: "k8s-service-account"
+      containers:
+      - name: "inventory-opt-service"
+        image: "gcr.io/serverless-k8s-study/inventory-opt-service"
+        ports:
+          - containerPort: 8080
+        env:
+        - name: "OPT_SUB"
+          valueFrom:
+            configMapKeyRef:
+              key: "OPT_SUB"
+              name: "inventory-opt-deployment-config"
+        - name: "OPT_FINISHED_TOPIC"
+          valueFrom:
+            configMapKeyRef:
+              key: "OPT_FINISHED_TOPIC"
+              name: "inventory-opt-deployment-config"
+        - name: "DATABASE_HOST"
+          valueFrom:
+            secretKeyRef:
+              key: "DATABASE_HOST"
+              name: "db-config-secret"
+        - name: "DATABASE_USER"
+          valueFrom:
+            secretKeyRef:
+              key: "DATABASE_USER"
+              name: "db-config-secret"
+        - name: "DATABASE_PASSWORD"
+          valueFrom:
+            secretKeyRef:
+              key: "DATABASE_PASSWORD"
+              name: "db-config-secret"
+        - name: "PORT"
+          valueFrom:
+            configMapKeyRef:
+              key: "PORT"
+              name: "inventory-opt-deployment-config"
+---
+apiVersion: "v1"
+kind: "Service"
+metadata:
+  name: "inventory-opt-service"
+  namespace: "default"
+  labels:
+    app: "inventory-opt"
+spec:
+  ports:
+  - protocol: "TCP"
+    port: 80
+    targetPort: 8080
+  selector:
+    app: "inventory-opt"
+  type: "ClusterIP"
