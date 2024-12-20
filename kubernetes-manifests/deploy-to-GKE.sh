@@ -2,6 +2,7 @@
 
 # List of Kubernetes manifest files
 YAML_FILES=(
+  "db-config-secret.yaml"
   "alert.yaml"
   "catalog.yaml"
   "customer.yaml"

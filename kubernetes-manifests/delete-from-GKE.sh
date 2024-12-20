@@ -8,6 +8,7 @@ YAML_FILES=(
   "inventory-mgmt.yaml"
   "inventory-opt.yaml"
   "order.yaml"
+  "db-config-secret.yaml"
 )
 
 # Loop through the listed files and delete them
