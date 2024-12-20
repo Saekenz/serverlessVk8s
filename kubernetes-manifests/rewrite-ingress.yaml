@@ -10,7 +10,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: 34.91.171.133.nip.io
+    - host: 35.204.7.182.nip.io
       http:
         paths:
           - path: /alerts(/|$)(.*)
@@ -25,13 +25,6 @@ spec:
             backend:
               service:
                 name: customer-service
-                port:
-                  number: 80
-          - path: /orders(/|$)(.*)
-            pathType: ImplementationSpecific
-            backend:
-              service:
-                name: order-service
                 port:
                   number: 80
           - path: /orders(/|$)(.*)
