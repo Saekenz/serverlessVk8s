@@ -35,3 +35,4 @@ out/
 
 ### VS Code ###
 .vscode/
+/kubernetes-manifests/db-config-secret.yaml
