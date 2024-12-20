@@ -17,4 +17,6 @@ public interface IInventoryService {
     ResponseEntity<?> processOptimizationFinishedNotification(String payload);
 
     ResponseEntity<?> handleTargetStockUpdateFromPushSubscription(String payload);
+
+    void checkProcessingStatus();
 }

@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -80,7 +81,7 @@ public class InventoryServiceImpl implements IInventoryService {
      */
     @Override
     public boolean handleTargetStockUpdateFromPullSubscription(String message) {
-        if (processingControl.isProcessingEnabled()) {
+        if (processingControl.isProcessingEnabledLocally()) {
             return processAndPersistTargetStockUpdate(message);
         }
         else {
@@ -101,7 +102,7 @@ public class InventoryServiceImpl implements IInventoryService {
      */
     @Override
     public ResponseEntity<?> handleTargetStockUpdateFromPushSubscription(String payload) {
-        if (processingControl.isProcessingEnabled()) {
+        if (processingControl.isProcessingEnabledLocally()) {
             boolean isUpdateSuccessful = processAndPersistTargetStockUpdate(payload);
 
             if(isUpdateSuccessful) {
@@ -168,7 +169,7 @@ public class InventoryServiceImpl implements IInventoryService {
     @Override
     public void handleOutgoingOptimizationMessage() {
         // Trigger an inventory optimization only if one isn't currently running
-        if (processingControl.isProcessingEnabled()) {
+        if (processingControl.isProcessingEnabledServiceWide()) {
             log.info("Sending optimization message");
             createAndSendOptMsg();
             processingControl.pauseProcessing();
@@ -245,5 +246,15 @@ public class InventoryServiceImpl implements IInventoryService {
     public void createAndSendOptMsg() {
         String optMsgJson = "";
         messagingGateway.sendToPubSub(optMsgJson, pubSubConfiguration.getOptimizeTopic());
+    }
+
+    /**
+     * Polls the database (every 3 seconds by default) to determine the current status of message processing.
+     *
+     */
+    @Scheduled(fixedRateString = "${inv.mgmt.processing.pollRate}")
+    @Override
+    public void checkProcessingStatus() {
+        processingControl.isProcessingEnabledServiceWide();
     }
 }
