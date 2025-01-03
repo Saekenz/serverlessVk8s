@@ -33,7 +33,7 @@ public class InventoryOptController {
     }
 
     @PostMapping("/optimize")
-    public ResponseEntity<?> processOptimizationRequest(@RequestBody String payload) {
+    public ResponseEntity<?> processOptimizationRequest(@RequestBody (required = false) String payload) {
         return inventoryService.processOptimizationRequest(payload);
     }
 }

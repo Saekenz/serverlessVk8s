@@ -244,7 +244,7 @@ public class InventoryServiceImpl implements IInventoryService {
     }
 
     public void createAndSendOptMsg() {
-        String optMsgJson = "";
+        String optMsgJson = "start";
         messagingGateway.sendToPubSub(optMsgJson, pubSubConfiguration.getOptimizeTopic());
     }
 

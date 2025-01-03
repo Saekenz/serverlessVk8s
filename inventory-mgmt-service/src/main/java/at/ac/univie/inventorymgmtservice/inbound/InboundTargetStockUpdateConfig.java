@@ -71,12 +71,18 @@ public class InboundTargetStockUpdateConfig {
         }
     }
 
-    @Scheduled(fixedRate = FIXED_RATE)
-    public void checkReceivedMessageVolume() {
-        if (messageCounter.get() > messageThreshold) {
-            inventoryService.handleOutgoingOptimizationMessage();
-        }
-        log.info("{} messages arrived in the last {} s!", messageCounter.get(), FIXED_RATE/1000);
-        messageCounter.set(0);
-    }
+    /**
+     * Automatic triggering of inventory optimization process by checking how many messages were received during
+     * the last {@link FIXED_RATE}.
+     * Currently disabled in favour of manual initialization.
+     *
+     */
+//    @Scheduled(fixedRate = FIXED_RATE)
+//    public void checkReceivedMessageVolume() {
+//        if (messageCounter.get() > messageThreshold) {
+//            inventoryService.handleOutgoingOptimizationMessage();
+//        }
+//        log.info("{} messages arrived in the last {} s!", messageCounter.get(), FIXED_RATE/1000);
+//        messageCounter.set(0);
+//    }
 }

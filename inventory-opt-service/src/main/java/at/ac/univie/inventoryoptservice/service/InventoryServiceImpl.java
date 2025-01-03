@@ -121,7 +121,7 @@ public class InventoryServiceImpl implements IInventoryService {
             return ResponseEntity.accepted().build();
         }
         else {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body("Start optimization message request body was null!");
         }
     }
 

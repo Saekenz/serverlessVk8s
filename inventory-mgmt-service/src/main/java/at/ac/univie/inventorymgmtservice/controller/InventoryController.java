@@ -22,10 +22,9 @@ public class InventoryController {
     private final PubSubConfiguration pubSubConfiguration;
 
     // for testing only
-    @PostMapping("/sendOpt")
-    public void sendOptMessage(@RequestBody String message) {
-        log.info("Sending optimization request message {}", message);
-        messagingGateway.sendToPubSub(message, pubSubConfiguration.getOptimizeTopic());
+    @PostMapping("/start-optimization")
+    public void sendOptMessage() {
+        inventoryService.handleOutgoingOptimizationMessage();
     }
 
     // for testing only
