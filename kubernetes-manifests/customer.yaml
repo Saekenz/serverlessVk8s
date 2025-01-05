@@ -29,6 +29,13 @@ spec:
       containers:
       - name: "customer-service-sha256-1"
         image: "gcr.io/serverless-k8s-study/customer-service"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
         ports:
           - containerPort: 8080
         env:
@@ -78,7 +85,7 @@ spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: customer-service
+    name: customer-deployment
   minReplicas: 1
   maxReplicas: 3
   metrics:
