@@ -33,7 +33,7 @@ spec:
         image: "gcr.io/serverless-k8s-study/inventory-opt-service"
         resources:
           requests:
-            memory: "1Mi"
+            memory: "1Gi"
             cpu: "500m"
           limits:
             memory: "2Gi"

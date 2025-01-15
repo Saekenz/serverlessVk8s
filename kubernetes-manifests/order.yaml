@@ -32,10 +32,10 @@ spec:
         image: "gcr.io/serverless-k8s-study/order-service"
         resources:
           requests:
-            memory: "512Mi"
+            memory: "768Mi"
             cpu: "250m"
           limits:
-            memory: "1Gi"
+            memory: "1.5Gi"
             cpu: "500m"
         ports:
           - containerPort: 8080
@@ -93,7 +93,7 @@ spec:
     kind: Deployment
     name: order-deployment
   minReplicas: 1
-  maxReplicas: 3
+  maxReplicas: 10
   metrics:
     - type: Resource
       resource:

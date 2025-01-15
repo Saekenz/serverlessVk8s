@@ -87,7 +87,7 @@ spec:
     kind: Deployment
     name: catalog-deployment
   minReplicas: 1
-  maxReplicas: 3
+  maxReplicas: 5
   metrics:
     - type: Resource
       resource:
