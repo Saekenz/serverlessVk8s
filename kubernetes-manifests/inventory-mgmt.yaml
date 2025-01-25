@@ -37,10 +37,10 @@ spec:
         image: "gcr.io/serverless-k8s-study/inventory-mgmt-service"
         resources:
           requests:
-            memory: "768Mi"
+            memory: "512Mi"
             cpu: "250m"
           limits:
-            memory: "1.5Gi"
+            memory: "1Gi"
             cpu: "500m"
         ports:
           - containerPort: 8080
@@ -120,10 +120,13 @@ spec:
         name: cpu
         target:
           type: Utilization
-          averageUtilization: 70
+          averageUtilization: 85
     - type: Resource
       resource:
         name: memory
         target:
           type: Utilization
-          averageUtilization: 80
+          averageUtilization: 70
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 60

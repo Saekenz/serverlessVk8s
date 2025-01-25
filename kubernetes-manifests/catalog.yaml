@@ -34,7 +34,7 @@ spec:
             memory: "512Mi"
             cpu: "250m"
           limits:
-            memory: "1Gi"
+            memory: "768Mi"
             cpu: "500m"
         ports:
           - containerPort: 8080
@@ -87,7 +87,7 @@ spec:
     kind: Deployment
     name: catalog-deployment
   minReplicas: 1
-  maxReplicas: 5
+  maxReplicas: 3
   metrics:
     - type: Resource
       resource:
@@ -100,4 +100,7 @@ spec:
         name: memory
         target:
           type: Utilization
-          averageUtilization: 80
+          averageUtilization: 70
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 60

@@ -32,11 +32,11 @@ spec:
         image: "gcr.io/serverless-k8s-study/order-service"
         resources:
           requests:
-            memory: "768Mi"
-            cpu: "250m"
-          limits:
-            memory: "1.5Gi"
+            memory: "512Mi"
             cpu: "500m"
+          limits:
+            memory: "768Mi"
+            cpu: "750m"
         ports:
           - containerPort: 8080
         env:
@@ -100,10 +100,13 @@ spec:
         name: cpu
         target:
           type: Utilization
-          averageUtilization: 70
+          averageUtilization: 80
     - type: Resource
       resource:
         name: memory
         target:
           type: Utilization
           averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 60
