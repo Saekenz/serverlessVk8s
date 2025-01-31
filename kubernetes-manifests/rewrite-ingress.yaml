@@ -10,7 +10,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: 34.90.184.150.nip.io
+    - host: 34.91.124.111.nip.io
       http:
         paths:
           - path: /alerts(/|$)(.*)

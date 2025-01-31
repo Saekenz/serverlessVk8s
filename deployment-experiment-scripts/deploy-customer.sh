@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Configuration
-GKE_DEPLOYMENT_FILE="order.yaml"
-GKE_DEPLOYMENT_NAME="order-deployment"
+GKE_DEPLOYMENT_FILE="customer.yaml"
+GKE_DEPLOYMENT_NAME="customer-deployment"
 
 echo "Starting GKE deployment test..."
 start_time=$(date +%s.%3N)
@@ -17,7 +17,7 @@ echo "Waiting for rollout status..."
 kubectl rollout status deployment/$GKE_DEPLOYMENT_NAME
 
 # Check for readiness using curl
-until curl -s -o /dev/null -w "%{http_code}" "34.13.168.83.nip.io/orders" | grep -q "200"; do
+until curl -s -o /dev/null -w "%{http_code}" "34.91.124.111.nip.io/customers" | grep -q "200"; do
   echo "Waiting for service to be ready..."
   sleep 2
 done
